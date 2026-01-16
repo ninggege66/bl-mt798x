@@ -2,9 +2,9 @@
 
 TOOLCHAIN=aarch64-linux-gnu-
 #UBOOT_DIR=uboot-mtk-20220606
-UBOOT_DIR=uboot-mtk-20230718-09eda825
+UBOOT_DIR=${UBOOT_DIR:-uboot-mtk-20230718-09eda825}
 #ATF_DIR=atf-20220606-637ba581b
-ATF_DIR=atf-20240117-bacca82a8
+ATF_DIR=${ATF_DIR:-atf-20240117-bacca82a8}
 
 if [ -z "$SOC" ] || [ -z "$BOARD" ]; then
 	echo "Usage: SOC=[mt7981|mt7986] BOARD=<board name> MULTI_LAYOUT=[0|1] $0"
@@ -76,10 +76,10 @@ if [ -e "$ATF_DIR/makefile" ]; then
 else
 	ATF_MKFILE="Makefile"
 fi
-make -C "$ATF_DIR" -f "$ATF_MKFILE" clean CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN"
+make -C "$ATF_DIR" -f "$ATF_MKFILE" clean CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" PLAT="$SOC"
 rm -rf "$ATF_DIR/build"
-make -C "$ATF_DIR" -f "$ATF_MKFILE" "$ATF_CFG" CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN"
-make -C "$ATF_DIR" -f "$ATF_MKFILE" all CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" CONFIG_BL33="../$UBOOT_DIR/u-boot.bin" BL33="../$UBOOT_DIR/u-boot.bin" -j $(nproc)
+make -C "$ATF_DIR" -f "$ATF_MKFILE" "$ATF_CFG" CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" PLAT="$SOC"
+make -C "$ATF_DIR" -f "$ATF_MKFILE" all CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" CONFIG_BL33="../$UBOOT_DIR/u-boot.bin" BL33="../$UBOOT_DIR/u-boot.bin" PLAT="$SOC" -j $(nproc)
 
 mkdir -p "output"
 if [ -f "$ATF_DIR/build/$SOC/release/fip.bin" ]; then
@@ -92,6 +92,13 @@ if [ -f "$ATF_DIR/build/$SOC/release/fip.bin" ]; then
 	fi
 	cp -f "$ATF_DIR/build/$SOC/release/fip.bin" "output/$FIP_NAME.bin"
 	echo "$FIP_NAME build done"
+
+	# Generate GPT if JSON config exists
+	if [ -f "${SOC}_${BOARD}.json" ]; then
+		GPT_NAME="${SOC}_${BOARD}-gpt.bin"
+		echo "Generating GPT: $GPT_NAME"
+		python3 "$ATF_DIR/tools/dev/gpt_editor/mtk_gpt.py" --i "${SOC}_${BOARD}.json" --o "output/$GPT_NAME"
+	fi
 else
 	echo "fip build fail!"
 	exit 1
@@ -99,7 +106,7 @@ fi
 if grep -Eq "(^_|CONFIG_TARGET_ALL_NO_SEC_BOOT=y)" "$ATF_DIR/configs/$ATF_CFG"; then
 	if [ -f "$ATF_DIR/build/$SOC/release/bl2.img" ]; then
 		BL2_NAME="${SOC}_${BOARD}-bl2"
-		cp -f "$ATF_DIR/build/$SOC/release/bl2.img" "output/$BL2_NAME.bin"
+		cp -f "$ATF_DIR/build/$SOC/release/bl2.img" "output/$BL2_NAME.img"
 		echo "$BL2_NAME build done"
 	else
 		echo "bl2 build fail!"

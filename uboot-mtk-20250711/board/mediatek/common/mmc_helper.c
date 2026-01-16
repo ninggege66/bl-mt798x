@@ -45,7 +45,7 @@
 
 #define GPT_PRIMARY_PARTITION_ENTRY_LBA 2ULL
 
-#define PART_PRODUCTION_NAME	"production"
+#define PART_PRODUCTION_NAME	"firmware"
 
 struct mmc_image_read_priv {
 	struct image_read_priv p;
@@ -449,7 +449,19 @@ int mmc_write_part(u32 dev, int hwpart, const char *part_name, const void *data,
 	if (!mmc)
 		return -ENODEV;
 
-	ret = _mmc_find_part(mmc, part_name, &dpart, true);
+	ret = _mmc_find_part(mmc, part_name, &dpart, false);
+	if (ret) {
+		if (!strcmp(part_name, "firmware")) {
+			ret = _mmc_find_part(mmc, "kernel", &dpart, false);
+			if (ret)
+				ret = _mmc_find_part(mmc, "production", &dpart, true);
+			else
+				part_name = "kernel";
+		} else {
+			_mmc_find_part(mmc, part_name, &dpart, true);
+		}
+	}
+
 	if (ret)
 		return ret;
 

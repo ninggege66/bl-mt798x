@@ -206,17 +206,17 @@ class GPT:
         return crc
 
     def _unsigned32(self, n):
-        return n & 0xFFFFFFFFL
+        return n & 0xFFFFFFFF
 
     def _serialize_gpt_table(self, gpt_entries, header=None):
-        buf = ""
+        buf = b""
         if not header:
             header = self.get_gpt_header()
         total_table_size = header.table_entry_count * header.table_entry_size
         for entry in gpt_entries:
             buf += entry.serialize()
         if len(buf) < total_table_size:
-            buf = buf.ljust((total_table_size), str(unichr(0x00)))
+            buf = buf.ljust((total_table_size), str(chr(0x00)).encode("utf-8"))
         return buf
 
     def _stringify_uuid(binary_uuid):
@@ -271,6 +271,6 @@ class GPT:
         part_entry_size_in_bytes = gpt_header.table_entry_size
         part_table_lbas = (
             part_entry_count * part_entry_size_in_bytes
-        ) / LBA_SIZE
+        ) // LBA_SIZE
         fbuf = self.blockdev.read_sector(part_entry_start_lba, part_table_lbas)
         return fbuf

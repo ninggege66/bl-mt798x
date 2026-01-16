@@ -1,0 +1,1 @@
+SOC=mt7987 BOARD=airpi_h5000m UBOOT_DIR=uboot-mtk-20250711 ATF_DIR=atf-20250711 ./build.sh
