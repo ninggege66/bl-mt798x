@@ -23,10 +23,10 @@ static u32 num_parts;
 static bool prompt_post_action(const struct data_part_entry *dpe)
 {
 	if (dpe->post_action == UPGRADE_ACTION_REBOOT)
-		return confirm_yes("Reboot after upgrading? (Y/n):");
+		return confirm_yes("更新完成后是否立即重启? (Y/n):");
 
 	if (dpe->post_action == UPGRADE_ACTION_BOOT)
-		return confirm_yes("Run image after upgrading? (Y/n):");
+		return confirm_yes("更新完成后是否立即运行映像? (Y/n):");
 
 	if (dpe->post_action == UPGRADE_ACTION_CUSTOM) {
 		if (dpe->custom_action_prompt)
@@ -51,7 +51,7 @@ static int do_post_action(const struct data_part_entry *dpe, const void *data,
 	}
 
 	if (dpe->post_action == UPGRADE_ACTION_REBOOT) {
-		printf("Rebooting ...\n\n");
+		printf("正在重启 ...\n\n");
 		return run_command("reset", 0);
 	}
 
@@ -67,14 +67,14 @@ static const struct data_part_entry *select_part(void)
 	char c;
 
 	printf("\n");
-	cprintln(PROMPT, "Available parts to be upgraded:");
+	cprintln(PROMPT, "可供更新的分区列表:");
 
 	for (i = 0; i < num_parts; i++)
 		printf("    %d - %s\n", i, upgrade_parts[i].name);
 
 	while (1) {
 		printf("\n");
-		cprint(PROMPT, "Select a part:");
+		cprint(PROMPT, "请选择一个分区:");
 		printf(" ");
 
 		c = getchar();
@@ -87,7 +87,7 @@ static const struct data_part_entry *select_part(void)
 
 	i = c - '0';
 	if (c < '0' || i >= num_parts) {
-		cprintln(ERROR, "*** Invalid selection! ***");
+		cprintln(ERROR, "*** 选择无效! ***");
 		return NULL;
 	}
 
@@ -106,7 +106,7 @@ static const struct data_part_entry *find_part(const char *abbr)
 			return &upgrade_parts[i];
 	}
 
-	cprintln(ERROR, "*** Invalid upgrading part! ***");
+	cprintln(ERROR, "*** 无效的更新分区! ***");
 
 	return NULL;
 }
@@ -136,7 +136,7 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** Upgrading %s ***", dpe->name);
+	cprintln(PROMPT, "*** 正在更新 %s ***", dpe->name);
 	printf("\n");
 
 	do_action = prompt_post_action(dpe);
@@ -149,7 +149,7 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** Loaded %zd (0x%zx) bytes at 0x%08lx ***",
+	cprintln(PROMPT, "*** 已在 0x%08lx 加载了 %zd (0x%zx) 字节 ***",
 		 data_size, data_size, data_load_addr);
 	printf("\n");
 
@@ -167,7 +167,7 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** %s upgrade completed! ***", dpe->name);
+	cprintln(PROMPT, "*** %s 更新完成! ***", dpe->name);
 
 	if (do_action) {
 		puts("\n");

@@ -451,14 +451,41 @@ int mmc_write_part(u32 dev, int hwpart, const char *part_name, const void *data,
 
 	ret = _mmc_find_part(mmc, part_name, &dpart, false);
 	if (ret) {
-		if (!strcmp(part_name, "firmware")) {
+		printf("Partition '%s' not found, trying fallbacks...\n", part_name);
+		if (!strcmp(part_name, "firmware") || !strcmp(part_name, "production")) {
 			ret = _mmc_find_part(mmc, "kernel", &dpart, false);
 			if (ret)
-				ret = _mmc_find_part(mmc, "production", &dpart, true);
-			else
-				part_name = "kernel";
+				ret = _mmc_find_part(mmc, "rootfs", &dpart, false);
+			
+			if (ret) {
+				const char *fallback = !strcmp(part_name, "firmware") ? "production" : "firmware";
+				ret = _mmc_find_part(mmc, fallback, &dpart, true);
+			}
+		} else if (!strcmp(part_name, "rootfs")) {
+			printf("Searching for 'production' as rootfs fallback...\n");
+			ret = _mmc_find_part(mmc, "production", &dpart, false);
+			if (ret) {
+				printf("Searching for 'firmware' as rootfs fallback...\n");
+				ret = _mmc_find_part(mmc, "firmware", &dpart, true);
+			} else
+				part_name = "production";
+		} else if (!strcmp(part_name, "kernel")) {
+			printf("Searching for 'production' as kernel fallback...\n");
+			ret = _mmc_find_part(mmc, "production", &dpart, false);
+			if (ret) {
+				printf("Searching for 'rootfs' as kernel fallback...\n");
+				ret = _mmc_find_part(mmc, "rootfs", &dpart, false);
+				if (ret) {
+					printf("Searching for 'firmware' as kernel fallback...\n");
+					ret = _mmc_find_part(mmc, "firmware", &dpart, true);
+				} else {
+					part_name = "rootfs";
+				}
+			} else {
+				part_name = "production";
+			}
 		} else {
-			_mmc_find_part(mmc, part_name, &dpart, true);
+			ret = _mmc_find_part(mmc, part_name, &dpart, true);
 		}
 	}
 

@@ -95,57 +95,57 @@ int board_boot_default(bool do_boot)
 
 static const struct bootmenu_entry mmc_bootmenu_entries[] = {
 	{
-		.desc = "Startup system (Default)",
+		.desc = "启动正系统 (默认)",
 		.cmd = "mtkboardboot"
 	},
 	{
-		.desc = "Upgrade firmware",
+		.desc = "更新固件 (ITB/Sysupgrade)",
 		.cmd = "mtkupgrade fw"
 	},
 	{
-		.desc = "Upgrade ATF BL2",
+		.desc = "更新 ATF BL2",
 		.cmd = "mtkupgrade bl2"
 	},
 	{
-		.desc = "Upgrade ATF FIP",
+		.desc = "更新 ATF FIP (U-Boot)",
 		.cmd = "mtkupgrade fip"
 	},
 #if defined(CONFIG_MTK_FIP_SUPPORT) && !defined(CONFIG_MTK_DUAL_FIP)
 	{
-		.desc = "  Upgrade ATF BL31 only",
+		.desc = "  仅更新 ATF BL31",
 		.cmd = "mtkupgrade bl31"
 	},
 	{
-		.desc = "  Upgrade bootloader only",
+		.desc = "  仅更新 U-Boot 主程序",
 		.cmd = "mtkupgrade bl33"
 	},
 #endif
 	{
-		.desc = "Upgrade partition table",
+		.desc = "更新分区表 (GPT)",
 		.cmd = "mtkupgrade gpt"
 	},
 	{
-		.desc = "Upgrade single image",
+		.desc = "更新单映像 (Simg)",
 		.cmd = "mtkupgrade simg"
 	},
 	{
-		.desc = "Load image",
+		.desc = "加载映像 (TFTP/Kermit)",
 		.cmd = "mtkload"
 	},
 #ifdef CONFIG_MTK_WEB_FAILSAFE
 	{
-		.desc = "Start Web failsafe",
+		.desc = "启动 Web 恢复模式",
 		.cmd = "httpd"
 	},
 #endif
 #ifdef CONFIG_MTK_DUAL_BOOT_EMERG_IMAGE_UPGRADE
 	{
-		.desc = "Upgrade emergency firmware",
+		.desc = "更新紧急备用固件",
 		.cmd = "mtkupgrade emergfw"
 	},
 #endif
 	{
-		.desc = "Change boot configuration",
+		.desc = "修改启动配置",
 		.cmd = "mtkbootconf"
 	},
 };

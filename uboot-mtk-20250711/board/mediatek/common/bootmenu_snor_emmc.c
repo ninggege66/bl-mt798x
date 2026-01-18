@@ -98,55 +98,55 @@ int board_boot_default(bool do_boot)
 
 static const struct bootmenu_entry snor_emmc_bootmenu_entries[] = {
 	{
-		.desc = "Startup system (Default)",
+		.desc = "启动正系统 (默认)",
 		.cmd = "mtkboardboot"
 	},
 	{
-		.desc = "Upgrade firmware",
+		.desc = "更新固件 (ITB/Sysupgrade)",
 		.cmd = "mtkupgrade fw"
 	},
 	{
-		.desc = "Upgrade ATF BL2",
+		.desc = "更新 ATF BL2",
 		.cmd = "mtkupgrade bl2"
 	},
 	{
-		.desc = "Upgrade ATF FIP",
+		.desc = "更新 ATF FIP (U-Boot)",
 		.cmd = "mtkupgrade fip"
 	},
 #ifdef CONFIG_MTK_FIP_SUPPORT
 	{
-		.desc = "  Upgrade ATF BL31 only",
+		.desc = "  仅更新 ATF BL31",
 		.cmd = "mtkupgrade bl31"
 	},
 	{
-		.desc = "  Upgrade bootloader only",
+		.desc = "  仅更新 U-Boot 主程序",
 		.cmd = "mtkupgrade bl33"
 	},
 #endif
 	{
-		.desc = "Upgrade partition table",
+		.desc = "更新分区表 (GPT)",
 		.cmd = "mtkupgrade gpt"
 	},
 	{
-		.desc = "Upgrade single image (SPI-NOR)",
+		.desc = "更新单映像 (SPI-NOR)",
 		.cmd = "mtkupgrade simg-snor"
 	},
 	{
-		.desc = "Upgrade single image (eMMC)",
+		.desc = "更新单映像 (eMMC)",
 		.cmd = "mtkupgrade simg-emmc"
 	},
 	{
-		.desc = "Load image",
+		.desc = "加载映像 (TFTP/Kermit)",
 		.cmd = "mtkload"
 	},
 #ifdef CONFIG_MTK_WEB_FAILSAFE
 	{
-		.desc = "Start Web failsafe",
+		.desc = "启动 Web 恢复模式",
 		.cmd = "httpd"
 	},
 #endif
 	{
-		.desc = "Change boot configuration",
+		.desc = "修改启动配置",
 		.cmd = "mtkbootconf"
 	},
 };

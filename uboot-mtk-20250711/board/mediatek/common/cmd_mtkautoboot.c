@@ -39,7 +39,7 @@ void set_bootmenu_repeat(const char *fmt, ...)
 		va_end(args);
 	}
 
-	printf("\nPress any key to return.\n\n");
+	printf("\n按任意键立即返回。\n\n");
 
 	tmo = timer_get_us() + AUTOBOOT_REPEAT_DELAY_SECONDS * USEC_PER_SEC;
 	last_remains = AUTOBOOT_REPEAT_DELAY_SECONDS + 1;
@@ -49,7 +49,7 @@ void set_bootmenu_repeat(const char *fmt, ...)
 		remains = (uint32_t)((tmo - tmr + USEC_PER_SEC - 1) / USEC_PER_SEC);
 
 		if (remains < last_remains) {
-			printf("\rReturning to bootmenu in %us ...", remains);
+			printf("\r将在 %u 秒后返回启动菜单 ...", remains);
 			last_remains = remains;
 		}
 
