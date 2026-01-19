@@ -1,39 +1,46 @@
 <!DOCTYPE HTML>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>Load initramfs</title>
-		<link rel="stylesheet" href="/style.css">
-		<script src="/main.js"></script>
-	</head>
-	<body onload="startup()">
-		<div id="m">
-			<h1>LOAD INITRAMFS</h1>
-			<p id="hint">
-				You are going to load <strong>initramfs</strong> on the device.<br>
-				Please, choose file from your local hard drive and click <strong>Upload</strong> button.
-			</p>
-			<form id="form">
-				<input id="file" type="file" name="initramfs">
-				<input type="button" value="Upload" onclick="upload('initramfs')">
-			</form>
-			<div>
-				<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
-			</div>
-			<div id="size" style="display: none;">Size: xxxx</div>
-			<div id="md5" style="display: none;">MD5: xxxx</div>
-			<div id="upgrade" style="display: none;">
-				<p>If all information above is correct, click "Boot".</p>
-				<button class="button" onclick="location = '/booting.html'">Boot</button>
-			</div>
-			<div class="i w">
-				<strong>WARNINGS</strong>
-				<ul>
-					<li>if everything goes well, the device will boot into the initramfs</li>
-					<li>you can upload whatever you want, so be sure that you choose proper initramfs image for your device</li>
-				</ul>
-			</div>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<title>加载内存系统</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+</head>
+
+<body onload="startup()">
+	<div id="m">
+		<h1>加载内存系统 (Initramfs)</h1>
+		<p id="hint">
+			您正在准备将 <strong>Initramfs 镜像</strong> 加载到设备内存中运行。<br>
+			请从本地磁盘选择文件，然后点击 <strong>上传</strong> 按钮。
+		</p>
+		<form id="form">
+			<input id="file" type="file" name="initramfs">
+			<input type="button" value="上传镜像" onclick="upload('initramfs')">
+		</form>
+		<div>
+			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
 		</div>
-		<div id="version"></div>
-	</body>
+		<div id="size" style="display: none;">大小: xxxx</div>
+		<div id="md5" style="display: none;">校验值(MD5): xxxx</div>
+		<div id="upgrade" style="display: none;">
+			<p>校验成功！请点击下方按钮开始引导。</p>
+			<button class="button" onclick="location = '/booting.html'">开始引导</button>
+		</div>
+		<div class="i w">
+			<strong>重要提示</strong>
+			<ul>
+				<li>如果一切顺利，设备将直接从内存启动进入系统</li>
+				<li>此操作不会对 Flash 分区进行持久化写入</li>
+				<li>请确保上传的镜像适配 K25pro 型号</li>
+			</ul>
+		</div>
+		<div style="text-align: center; margin-top: 40px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
 </html>

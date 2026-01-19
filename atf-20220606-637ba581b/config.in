@@ -82,6 +82,10 @@ menu "Target"
 			bool "ram"
 			help
 			  ram device
+		config RAM_BOOT_UART_DL
+			bool "Enable UART Download for RAM Boot"
+			depends on FLASH_DEVICE_RAM
+			default n
 	endchoice
 	config SNFI_SNAND_TYPE
 		string "nand flash type"

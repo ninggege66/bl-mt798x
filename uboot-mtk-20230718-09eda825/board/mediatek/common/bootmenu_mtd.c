@@ -39,7 +39,7 @@ static struct mtd_info *get_mtd_part(const char *partname)
 		mtd = get_mtd_device(NULL, 0);
 
 	if (IS_ERR(mtd)) {
-		cprintln(ERROR, "*** MTD partition '%s' not found! ***",
+		cprintln(ERROR, "*** 找不到 MTD 分区 '%s'！ ***",
 			 partname);
 	}
 
@@ -117,19 +117,19 @@ static int write_bl31(void *priv, const struct data_part_entry *dpe,
 
 	ret = get_fip_buffer(FIP_READ_BUFFER, &buf, &buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP buffer failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 缓冲区分配失败 (%d) ***", ret);
 		return -ENOBUFS;
 	}
 
 	ret = read_part("fip", buf, &fip_part_size, buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP read failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 读取失败 (%d) ***", ret);
 		return -EBADMSG;
 	}
 	ret = fip_update_bl31_data(data, size, buf, fip_part_size,
 				   &new_fip_size, buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP update u-boot failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 更新 BL31 失败 (%d) ***", ret);
 		return -EBADMSG;
 	}
 
@@ -147,20 +147,20 @@ static int write_bl33(void *priv, const struct data_part_entry *dpe,
 
 	ret = get_fip_buffer(FIP_READ_BUFFER, &buf, &buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP buffer failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 缓冲区分配失败 (%d) ***", ret);
 		return -ENOBUFS;
 	}
 
 	ret = read_part("fip", buf, &fip_part_size, buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP read failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 读取失败 (%d) ***", ret);
 		return -EBADMSG;
 	}
 
 	ret = fip_update_uboot_data(data, size, buf, fip_part_size,
 				    &new_fip_size, buf_size);
 	if (ret) {
-		cprintln(ERROR, "*** FIP update u-boot failed (%d) ***", ret);
+		cprintln(ERROR, "*** FIP 更新 U-Boot 失败 (%d) ***", ret);
 		return -EBADMSG;
 	}
 
@@ -176,7 +176,7 @@ static int validate_bl2_image(void *priv, const struct data_part_entry *dpe,
 	if (IS_ENABLED(CONFIG_MTK_UPGRADE_BL2_VERIFY)) {
 		ret = bl2_check_image_data(data, size);
 		if (ret) {
-			cprintln(ERROR, "*** BL2 verification failed ***");
+			cprintln(ERROR, "*** BL2 校验失败 ***");
 			ret = -EBADMSG;
 		}
 	}
@@ -193,8 +193,8 @@ static int validate_simg_image(void *priv, const struct data_part_entry *dpe,
 	ret = validate_bl2_image(priv, dpe, data, size);
 
 	if (ret) {
-		cprintln(ERROR, "*** Single image must include bl2 image ***");
-		cprintln(ERROR, "*** Single image verification failed ***");
+		cprintln(ERROR, "*** 单镜像中必须包含 BL2 镜像 ***");
+		cprintln(ERROR, "*** 单镜像校验失败 ***");
 	}
 
 	return ret;
@@ -208,7 +208,7 @@ static int validate_fip_image(void *priv, const struct data_part_entry *dpe,
 	if (IS_ENABLED(CONFIG_MTK_UPGRADE_FIP_VERIFY)) {
 		ret = fip_check_uboot_data(data, size);
 		if (ret) {
-			cprintln(ERROR, "*** FIP verification failed ***");
+			cprintln(ERROR, "*** FIP 校验失败 ***");
 			ret = -EBADMSG;
 		}
 	}
@@ -225,7 +225,7 @@ static int validate_bl31_image(void *priv, const struct data_part_entry *dpe,
 	if (IS_ENABLED(CONFIG_MTK_UPGRADE_FIP_VERIFY)) {
 		ret = check_bl31_data(data, size);
 		if (ret) {
-			cprintln(ERROR, "*** BL31 verification failed ***");
+			cprintln(ERROR, "*** BL31 校验失败 ***");
 			ret = -EBADMSG;
 		}
 	}
@@ -241,7 +241,7 @@ static int validate_bl33_image(void *priv, const struct data_part_entry *dpe,
 	if (IS_ENABLED(CONFIG_MTK_UPGRADE_FIP_VERIFY)) {
 		ret = check_uboot_data(data, size);
 		if (ret) {
-			cprintln(ERROR, "*** U-boot verification failed ***");
+			cprintln(ERROR, "*** U-Boot 校验失败 ***");
 			ret = -EBADMSG;
 		}
 	}
@@ -271,7 +271,7 @@ static int validate_firmware(void *priv, const struct data_part_entry *dpe,
 		if (ret)
 			return 0;
 
-		cprintln(ERROR, "*** Firmware integrity verification failed ***");
+		cprintln(ERROR, "*** 固件完整性校验失败 ***");
 		return -EBADMSG;
 	}
 
@@ -287,7 +287,7 @@ static int write_firmware(void *priv, const struct data_part_entry *dpe,
 	if (!ret)
 		return 0;
 
-	cprintln(ERROR, "*** Image not supported! ***");
+	cprintln(ERROR, "*** 镜像格式不支持！ ***");
 	return -ENOTSUPP;
 }
 
@@ -369,7 +369,7 @@ static const struct data_part_entry mtd_parts[] = {
 	},
 #ifdef CONFIG_MTK_FIP_SUPPORT
 	{
-		.name = "BL31 of ATF FIP",
+		.name = "ATF FIP 中的 BL31",
 		.abbr = "bl31",
 		.env_name = "bootfile.bl31",
 		.validate = validate_bl31_image,
@@ -377,7 +377,7 @@ static const struct data_part_entry mtd_parts[] = {
 		.post_action = UPGRADE_ACTION_CUSTOM,
 	},
 	{
-		.name = "BL33 of ATF FIP",
+		.name = "ATF FIP 中的 U-Boot (BL33)",
 		.abbr = "bl33",
 		.env_name = "bootfile.bl33",
 		.validate = validate_bl33_image,
@@ -387,7 +387,7 @@ static const struct data_part_entry mtd_parts[] = {
 	},
 #endif
 	{
-		.name = "Firmware",
+		.name = "系统固件",
 		.abbr = "fw",
 		.env_name = "bootfile",
 		.post_action = UPGRADE_ACTION_BOOT,
@@ -395,7 +395,7 @@ static const struct data_part_entry mtd_parts[] = {
 		.write = write_firmware,
 	},
 	{
-		.name = "Single image",
+		.name = "单镜像 (Sparse Image)",
 		.abbr = "simg",
 		.env_name = "bootfile.simg",
 		.validate = validate_simg_image,
@@ -416,45 +416,49 @@ int board_boot_default(void)
 
 static const struct bootmenu_entry mtd_bootmenu_entries[] = {
 	{
-		.desc = "Startup system (Default)",
+		.desc = "启动系统 (默认)",
 		.cmd = "mtkboardboot"
 	},
 	{
-		.desc = "Upgrade firmware",
+		.desc = "更新系统固件",
 		.cmd = "mtkupgrade fw"
 	},
 	{
-		.desc = "Upgrade ATF BL2",
+		.desc = "更新 ATF BL2",
 		.cmd = "mtkupgrade bl2"
 	},
 	{
-		.desc = "Upgrade ATF FIP",
+		.desc = "更新 ATF FIP",
 		.cmd = "mtkupgrade fip"
 	},
 #ifdef CONFIG_MTK_FIP_SUPPORT
 	{
-		.desc = "  Upgrade ATF BL31 only",
+		.desc = "  仅更新 ATF BL31",
 		.cmd = "mtkupgrade bl31"
 	},
 	{
-		.desc = "  Upgrade bootloader only",
+		.desc = "  仅更新 U-Boot",
 		.cmd = "mtkupgrade bl33"
 	},
 #endif
 	{
-		.desc = "Upgrade single image",
+		.desc = "更新单个镜像 (Sparse Image)",
 		.cmd = "mtkupgrade simg"
 	},
 	{
-		.desc = "Load image",
+		.desc = "常规加载镜像",
 		.cmd = "mtkload"
 	},
 #ifdef CONFIG_MTK_WEB_FAILSAFE
 	{
-		.desc = "Start Web failsafe",
+		.desc = "启动 Web 救砖控制台",
 		.cmd = "httpd"
 	},
 #endif
+	{
+		.desc = "进入命令行控制台",
+		.cmd = "env set bootmenu_exit 1"
+	},
 };
 
 void board_bootmenu_entries(const struct bootmenu_entry **menu, u32 *count)

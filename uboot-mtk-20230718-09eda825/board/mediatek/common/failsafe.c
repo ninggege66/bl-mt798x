@@ -100,8 +100,8 @@ int failsafe_write_image(const void *data, size_t size, failsafe_fw_t fw)
 	led_control("ledblink", "blink_led", "100");
 #endif
 	printf("\n");
-	cprintln(PROMPT, "*** Upgrading %s ***", dpe->name);
-	cprintln(PROMPT, "*** Data: %zd (0x%zx) bytes at 0x%08lx ***",
+	cprintln(PROMPT, "*** 正在更新 %s ***", dpe->name);
+	cprintln(PROMPT, "*** 数据大小: %zd (0x%zx) 字节，内存地址 0x%08lx ***",
 		 size, size, (ulong)data);
 	printf("\n");
 
@@ -114,7 +114,7 @@ int failsafe_write_image(const void *data, size_t size, failsafe_fw_t fw)
 		return ret;
 
 	printf("\n");
-	cprintln(PROMPT, "*** %s upgrade completed! ***", dpe->name);
+	cprintln(PROMPT, "*** %s 更新已完成！ ***", dpe->name);
 	printf("\n");
 
 	if (dpe->do_post_action)

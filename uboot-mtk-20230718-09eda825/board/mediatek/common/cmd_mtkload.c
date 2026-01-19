@@ -38,7 +38,7 @@ static int do_mtkload(struct cmd_tbl *cmdtp, int flag, int argc,
 	size_t data_size = 0;
 
 	printf("\n");
-	cprintln(PROMPT, "*** Loading image ***");
+	cprintln(PROMPT, "*** 正在加载镜像 ***");
 	printf("\n");
 
 	/* Set load address */
@@ -48,14 +48,14 @@ static int do_mtkload(struct cmd_tbl *cmdtp, int flag, int argc,
 	def_load_addr = __stringify(CONFIG_LOADADDR);
 #endif
 
-	if (env_update("loadaddr", def_load_addr, "Input load address:",
+	if (env_update("loadaddr", def_load_addr, "输入加载地址:",
 		       s_load_addr, sizeof(s_load_addr)))
 		return CMD_RET_FAILURE;
 
 	data_load_addr = simple_strtoul(s_load_addr, &addr_end, 0);
 	if (*addr_end) {
 		printf("\n");
-		cprintln(ERROR, "*** Invalid load address! ***");
+		cprintln(ERROR, "*** 无效的加载地址！ ***");
 		return CMD_RET_FAILURE;
 	}
 
@@ -66,14 +66,14 @@ static int do_mtkload(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** Loaded %zd (0x%zx) bytes at 0x%08lx ***",
+	cprintln(PROMPT, "*** 已加载 %zd (0x%zx) 字节，内存地址 0x%08lx ***",
 		 data_size, data_size, data_load_addr);
 	printf("\n");
 
 	image_load_addr = data_load_addr;
 
 	/* Whether to run or not */
-	if (confirm_yes("Run loaded data now? (Y/n):")) {
+	if (confirm_yes("现在运行已加载的数据? (Y/n):")) {
 		/* Run image */
 		return run_image(data_load_addr, data_size);
 	}

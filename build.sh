@@ -108,6 +108,10 @@ if grep -Eq "(^_|CONFIG_TARGET_ALL_NO_SEC_BOOT=y)" "$ATF_DIR/configs/$ATF_CFG"; 
 		BL2_NAME="${SOC}_${BOARD}-bl2"
 		cp -f "$ATF_DIR/build/$SOC/release/bl2.img" "output/$BL2_NAME.img"
 		echo "$BL2_NAME build done"
+	elif [ -f "$ATF_DIR/build/$SOC/release/bl2.bin" ]; then
+		BL2_NAME="${SOC}_${BOARD}-bl2"
+		cp -f "$ATF_DIR/build/$SOC/release/bl2.bin" "output/$BL2_NAME.bin"
+		echo "$BL2_NAME (bin) build done"
 	else
 		echo "bl2 build fail!"
 		exit 1

@@ -1,7 +1,7 @@
 /* 
  * Premium High-Tech main.js with Tech animations
- * Created by Antigravity for Hiveton H5000M
- * Developed by: 宁哥1562703382
+ * Created by Antigravity for K25pro
+ * Developed by: 企业专用K25pro专业网络设备
  */
 
 function ajax(options) {
@@ -121,7 +121,7 @@ function getversion() {
     ajax({
         url: '/version',
         done: function (res) {
-            document.getElementById('version').innerHTML = '控制台内核版本: ' + res + '<br>界面开发: 宁哥1562703382';
+            document.getElementById('version').innerHTML = '控制台内核版本: ' + res + '<br>设备型号: K25pro | 企业专用K25pro专业网络设备';
         }
     });
 }
@@ -166,6 +166,22 @@ function startup() {
 
     // Add high-tech background animation
     createStars();
+
+    // Add typewriter effect for hint
+    var hint = document.getElementById('hint');
+    if (hint) {
+        var text = hint.innerText;
+        hint.innerText = '';
+        var i = 0;
+        var interval = setInterval(function () {
+            if (i < text.length) {
+                hint.innerText += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 30);
+    }
 }
 
 function tryOldMtdLayoutApi() {
@@ -193,14 +209,16 @@ function tryOldMtdLayoutApi() {
 }
 
 function createStars() {
-    const starCount = 50;
+    const starCount = 80;
     const body = document.body;
     for (let i = 0; i < starCount; i++) {
         let star = document.createElement('div');
         star.className = 'tech-star';
         star.style.left = Math.random() * 100 + 'vw';
         star.style.top = Math.random() * 100 + 'vh';
-        star.style.animationDelay = Math.random() * 5 + 's';
+        star.style.animationDelay = Math.random() * 8 + 's';
+        star.style.width = (Math.random() * 3 + 1) + 'px';
+        star.style.height = star.style.width;
         body.appendChild(star);
     }
 }

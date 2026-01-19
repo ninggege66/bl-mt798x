@@ -216,13 +216,19 @@ static enum cmd_proc_result cmd_process(void)
 	}
 }
 
+#include <stdio.h>
+
+/* ... existing includes ... */
+
+/* ... code ... */
+
 void start_uart_dl(uintptr_t loadaddr)
 {
 	enum cmd_proc_result result;
 
 	data_loadaddr = loadaddr;
 
-	NOTICE("Starting UART download handshake ...\n");
+	printf("Starting UART download handshake ...\n");
 
 	do {
 		handshake();
@@ -235,5 +241,5 @@ void start_uart_dl(uintptr_t loadaddr)
 			;
 	}
 
-	NOTICE("Received FIP 0x%zx @ 0x%08lx ...\n", data_size, loadaddr);
+	printf("Received FIP 0x%zx @ 0x%08lx ...\n", data_size, loadaddr);
 }
