@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<title>系统启动中...</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+	<script>
+		function init() {
+			getversion();
+
+			ajax({
+				url: '/result',
+				done: function (response) {
+					if (response == 'failed') {
+						location = '/fail.html'
+						return
+					}
+
+					document.getElementById('title').innerHTML = '启动成功'
+					document.getElementById('title').style.color = '#4caf50'
+					document.getElementById('info').innerHTML = '镜像已成功加载，设备正在进入 Initramfs 系统！'
+				},
+				timeout: 30000
+			})
+		}
+	</script>
+</head>
+
+<body onload="init()">
+	<div id="m">
+		<h1 id="title">正在启动系统...</h1>
+		<p id="info">
+			文件已成功上传！系统正在引导，请稍候...<br>
+			此页面可能会短暂失去响应，请勿关闭。
+		</p>
+		<div id="l"></div>
+		<div style="text-align: center; margin-top: 40px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
+</html>

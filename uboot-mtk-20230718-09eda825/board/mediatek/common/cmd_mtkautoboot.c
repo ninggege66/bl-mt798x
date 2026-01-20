@@ -59,16 +59,8 @@ static int do_mtkautoboot(struct cmd_tbl *cmdtp, int flag, int argc,
 		delay = CONFIG_MEDIATEK_BOOTMENU_DELAY;
 #endif
 
-	for (;;) {
-		snprintf(cmd, sizeof(cmd), "bootmenu %d", delay);
-		run_command(cmd, 0);
-		delay = -1;
-
-		if (env_get_yesno("bootmenu_exit") == 1) {
-			env_set("bootmenu_exit", NULL);
-			break;
-		}
-	}
+	snprintf(cmd, sizeof(cmd), "bootmenu %d", delay);
+	run_command(cmd, 0);
 
 	return CMD_RET_SUCCESS;
 }

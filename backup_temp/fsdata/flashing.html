@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>写入固件中...</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+	<script>
+		function init() {
+			getversion();
+
+			ajax({
+				url: '/result',
+				done: function (response) {
+					if (response == 'failed') {
+						location = '/fail.html'
+						return
+					}
+
+					document.getElementById('title').innerHTML = '更新成功'
+					document.getElementById('title').style.color = '#4caf50'
+					document.getElementById('info').innerHTML = '您的设备已成功完成更新！系统正在自动重启，请稍候...'
+				},
+				timeout: 1800000
+			})
+		}
+	</script>
+</head>
+
+<body onload="init()">
+	<div id="m">
+		<h1 id="title">正在写入固件...</h1>
+		<p id="info">
+			文件已成功上传！系统正在进行底层写入，请不要关闭电源，耐心等待设备自动重启。<br>
+			写入时间取决于固件大小，通常需要几分钟。
+		</p>
+		<div id="l"></div>
+		<div style="text-align: center; margin-top: 40px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
+</html>

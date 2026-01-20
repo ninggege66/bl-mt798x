@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>分区表更新</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+</head>
+
+<body onload="getversion()">
+	<div id="m">
+		<h1>分区表 (GPT) 更新</h1>
+		<p id="hint">
+			您正在准备更新设备的 <strong>GPT 分区表</strong>。<br>
+			请注意，这会重新定义磁盘结构，必须使用匹配的 GPT 镜像。
+		</p>
+		<form id="form">
+			<input id="file" type="file" name="gpt">
+			<input type="button" value="上传分区表" onclick="upload('gpt')">
+		</form>
+		<div>
+			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
+		</div>
+		<div id="size" style="display: none;">大小: xxxx</div>
+		<div id="md5" style="display: none;">校验值: xxxx</div>
+		<div id="upgrade" style="display: none;">
+			<p>准备就绪。点击下方按钮开始写入分区表。</p>
+			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
+		</div>
+		<div class="i w">
+			<strong>重要提示</strong>
+			<ul>
+				<li>更新过程中请勿断电</li>
+				<li>更新成功后，所有现有分区数据可能会丢失</li>
+				<li>修改 GPT 属于高风险操作，请查阅相关文档以确认适配性</li>
+			</ul>
+		</div>
+		<div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
+</html>

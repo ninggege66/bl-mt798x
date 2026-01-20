@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>U-Boot 更新</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+</head>
+
+<body onload="getversion()">
+	<div id="m">
+		<h1>U-BOOT 更新</h1>
+		<p id="hint">
+			您正在准备更新设备的 <strong>U-Boot (FIP) 开机引导程序</strong>。<br>
+			请务必确认文件完整且适用于当前型号。
+		</p>
+		<form id="form">
+			<input id="file" type="file" name="fip">
+			<input type="button" value="上传 U-Boot" onclick="upload('fip')">
+		</form>
+		<div>
+			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
+		</div>
+		<div id="size" style="display: none;">大小: xxxx</div>
+		<div id="md5" style="display: none;">校验值: xxxx</div>
+		<div id="upgrade" style="display: none;">
+			<p>验证通过！确认无误后点击下方按钮开始写入。</p>
+			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
+		</div>
+		<div class="i w">
+			<strong>极高风险警告</strong>
+			<ul>
+				<li>更新 U-Boot 过程中断电将导致设备变砖</li>
+				<li>请确保使用的是 K25pro 专用 FIP 文件</li>
+				<li>非专业人士请谨慎操作</li>
+			</ul>
+		</div>
+		<div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
+</html>

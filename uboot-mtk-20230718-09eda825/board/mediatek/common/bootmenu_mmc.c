@@ -356,46 +356,46 @@ int board_boot_default(void)
 
 static const struct bootmenu_entry mmc_bootmenu_entries[] = {
 	{
-		.desc = "启动正系统 (默认)",
+		.desc = "Startup system (Default)",
 		.cmd = "mtkboardboot"
 	},
 	{
-		.desc = "更新固件 (ITB/Sysupgrade)",
+		.desc = "Upgrade firmware",
 		.cmd = "mtkupgrade fw"
 	},
 	{
-		.desc = "更新 ATF BL2",
+		.desc = "Upgrade ATF BL2",
 		.cmd = "mtkupgrade bl2"
 	},
 	{
-		.desc = "更新 ATF FIP (U-Boot)",
+		.desc = "Upgrade ATF FIP",
 		.cmd = "mtkupgrade fip"
 	},
 #ifdef CONFIG_MTK_FIP_SUPPORT
 	{
-		.desc = "  仅更新 ATF BL31",
+		.desc = "  Upgrade ATF BL31 only",
 		.cmd = "mtkupgrade bl31"
 	},
 	{
-		.desc = "  仅更新 U-Boot 主程序",
+		.desc = "  Upgrade bootloader only",
 		.cmd = "mtkupgrade bl33"
 	},
 #endif
 	{
-		.desc = "更新分区表 (GPT)",
+		.desc = "Upgrade partition table",
 		.cmd = "mtkupgrade gpt"
 	},
 	{
-		.desc = "更新单映像 (Simg)",
+		.desc = "Upgrade single image",
 		.cmd = "mtkupgrade simg"
 	},
 	{
-		.desc = "加载映像 (TFTP/Kermit)",
+		.desc = "Load image",
 		.cmd = "mtkload"
 	},
 #ifdef CONFIG_MTK_WEB_FAILSAFE
 	{
-		.desc = "启动 Web 恢复模式",
+		.desc = "Start Web failsafe",
 		.cmd = "httpd"
 	},
 #endif

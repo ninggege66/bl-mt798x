@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>K25pro 专业网络设备 - 救砖控制台</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+</head>
+
+<body onload="startup()">
+	<div id="m">
+		<h1>固件更新终端</h1>
+		<p id="hint">
+			您正在准备更新设备固件。<br>
+			请从本地磁盘选择固件文件，然后点击 <strong>上传</strong> 按钮。
+		</p>
+		<form id="form">
+			<div id="mtd_layout" style="display: none;">
+				<div id="current_mtd_layout"></div>
+				<br>
+				选择分区布局:
+				<select id="mtd_layout_label" name="mtd_layout_label"></select>
+				<br><br>
+			</div>
+			<input id="file" type="file" name="firmware">
+			<input type="button" value="上传文件" onclick="upload('firmware')">
+		</form>
+		<div>
+			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
+		</div>
+		<div id="size" style="display: none;">文件大小: xxxx</div>
+		<div id="md5" style="display: none;">校验值(MD5): xxxx</div>
+		<div id="mtd" style="display: none;">分区布局: xxxx</div>
+		<div id="upgrade" style="display: none;">
+			<p>验证通过！点击下方按钮开始写入固件。</p>
+			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
+		</div>
+		<div class="i w">
+			<strong>安全警告</strong>
+			<ul>
+				<li>更新过程中请务必保持电源连接，切勿断电</li>
+				<li>更新完成后，设备将自动重启进入新系统</li>
+				<li>请确保上传的文件适用于 K25pro，错误的固件可能会导致无法启动</li>
+			</ul>
+		</div>
+		<div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备<br>
+			BUILD: 2026.01.19 - K25PRO-PROFESSIONAL
+		</div>
+	</div>
+	<div id="version">控制台版本: v2025.07-MTK</div>
+</body>
+
+</html>

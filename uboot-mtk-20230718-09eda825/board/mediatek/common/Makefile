@@ -18,7 +18,8 @@ endif
 obj-$(CONFIG_MEDIATEK_MULTI_MTD_LAYOUT) += mtd_layout.o
 
 obj-$(CONFIG_MEDIATEK_BOOTMENU) += cmd_mtkupgrade.o cmd_mtkload.o \
-				   cmd_mtkboardboot.o cmd_mtkautoboot.o
+				   cmd_mtkboardboot.o cmd_mtkautoboot.o \
+				   mtk_mac_inject.o
 
 obj-$(CONFIG_MTK_BOOTMENU_MTD) += bootmenu_mtd.o
 obj-$(CONFIG_MTK_BOOTMENU_MTD_LEGACY) += bootmenu_mtd_legacy.o

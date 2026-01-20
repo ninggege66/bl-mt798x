@@ -7,12 +7,17 @@
 #include <common.h>
 #include <config.h>
 #include <dm.h>
+#include <button.h>
 #include <env.h>
 #include <init.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include <linux/libfdt.h>
+
+#ifndef CONFIG_RESET_BUTTON_LABEL
+#define CONFIG_RESET_BUTTON_LABEL "reset"
+#endif
 
 #define MT7622_TOPRGUSTRAP_PAR			0x10212060
 #define MT7622_BOOT_SEQ_MASK			0x18
@@ -56,7 +61,22 @@ int board_init(void)
 
 int board_late_init(void)
 {
-	gd->env_valid = 1; //to load environment variable from persistent store
+	struct udevice *dev;
+
+	if (!button_get_by_label(CONFIG_RESET_BUTTON_LABEL, &dev)) {
+		puts("reset button found\n");
+#ifdef CONFIG_RESET_BUTTON_SETTLE_DELAY
+		if (CONFIG_RESET_BUTTON_SETTLE_DELAY > 0) {
+			button_get_state(dev);
+			mdelay(CONFIG_RESET_BUTTON_SETTLE_DELAY);
+		}
+#endif
+		if (button_get_state(dev) == BUTTON_ON) {
+			puts("button pushed, resetting environment\n");
+			gd->env_valid = ENV_INVALID;
+		}
+	}
+
 	env_relocate();
 	return 0;
 }

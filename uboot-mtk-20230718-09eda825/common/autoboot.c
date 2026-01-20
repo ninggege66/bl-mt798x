@@ -468,8 +468,6 @@ const char *bootdelay_process(void)
 			run_command("mtkautoboot", 0);
 		else
 			bootdelay = menu_show(bootdelay);
-
-		bootdelay = -1;
 	}
 	bootretry_init_cmd_timeout();
 

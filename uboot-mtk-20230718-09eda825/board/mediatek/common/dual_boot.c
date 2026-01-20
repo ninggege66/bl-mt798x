@@ -8,8 +8,10 @@
  */
 
 #include <env.h>
+#include <net.h>
 #include <stdio.h>
 #include <linux/errno.h>
+#include <linux/libfdt.h>
 #include <vsprintf.h>
 #include <malloc.h>
 #include <image.h>
@@ -164,10 +166,65 @@ void board_prep_linux(struct bootm_headers *images)
 	char *new_cmdline;
 	u32 slot, newlen;
 	int ret;
+	uchar ethaddr[ARP_HLEN];
+	const char *eth_path = NULL;
 
 	if (!(CONFIG_IS_ENABLED(OF_LIBFDT) && images->ft_len)) {
 		printf("Warning: no FDT present for current image!\n");
 		return;
+	}
+
+	fdt_increase_size(fdt, 0x1000);
+
+	if (fdt_path_offset(fdt, "/soc/ethernet@15100000") >= 0)
+		eth_path = "/soc/ethernet@15100000";
+	else if (fdt_path_offset(fdt, "/ethernet@15100000") >= 0)
+		eth_path = "/ethernet@15100000";
+
+	if (eth_env_get_enetaddr("ethaddr", ethaddr)) {
+		int alias, eth, alen;
+		const char *path;
+
+		alias = fdt_path_offset(fdt, "/aliases");
+		if (alias < 0)
+			alias = fdt_add_subnode(fdt, 0, "aliases");
+		if (alias >= 0) {
+			if (eth_path) {
+				fdt_setprop_string(fdt, alias, "ethernet0",
+						   eth_path);
+				fdt_setprop_string(fdt, alias, "ethernet",
+						   eth_path);
+			}
+
+			path = fdt_getprop(fdt, alias, "ethernet0", &alen);
+			if (!path)
+				path = fdt_getprop(fdt, alias, "ethernet", &alen);
+			if (path && alen > 1) {
+				eth = fdt_path_offset(fdt, path);
+				if (eth >= 0) {
+					fdt_setprop(fdt, eth, "local-mac-address",
+						    ethaddr, ARP_HLEN);
+					fdt_setprop(fdt, eth, "mac-address",
+						    ethaddr, ARP_HLEN);
+				}
+			}
+		}
+
+		eth = fdt_path_offset(fdt, "/ethernet@15100000");
+		if (eth >= 0) {
+			fdt_setprop(fdt, eth, "local-mac-address",
+				    ethaddr, ARP_HLEN);
+			fdt_setprop(fdt, eth, "mac-address",
+				    ethaddr, ARP_HLEN);
+		}
+
+		eth = fdt_path_offset(fdt, "/soc/ethernet@15100000");
+		if (eth >= 0) {
+			fdt_setprop(fdt, eth, "local-mac-address",
+				    ethaddr, ARP_HLEN);
+			fdt_setprop(fdt, eth, "mac-address",
+				    ethaddr, ARP_HLEN);
+		}
 	}
 
 	/* find or create "/chosen" node. */
@@ -199,7 +256,7 @@ void board_prep_linux(struct bootm_headers *images)
 	debug("%s: new cmdline = \"%s\"\n", __func__, new_cmdline);
 
 	newlen = strlen(new_cmdline) + 1;
-	fdt_shrink_to_minimum(fdt, newlen);
+	fdt_shrink_to_minimum(fdt, newlen + 64);
 
 	ret = fdt_setprop(fdt, nodeoffset, "bootargs", new_cmdline, newlen);
 	if (ret < 0) {

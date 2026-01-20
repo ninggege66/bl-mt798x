@@ -16,6 +16,8 @@
 #include <dm/ofnode.h>
 #include <linux/ctype.h>
 #include <linux/types.h>
+#include <linux/mtd/mtd.h>
+#include <mtd.h>
 #include <asm/global_data.h>
 #include <linux/libfdt.h>
 #include <fdt_support.h>
@@ -564,17 +566,22 @@ void fdt_fixup_ethernet(void *fdt)
 	char mac[16];
 	const char *path;
 	unsigned char mac_addr[ARP_HLEN];
+	unsigned char env_mac[ARP_HLEN];
 	int offset;
+	int has_aliases;
+	int node;
+	fdt_addr_t addr;
 #ifdef FDT_SEQ_MACADDR_FROM_ENV
 	int nodeoff;
 	const struct fdt_property *fdt_prop;
 #endif
 
-	if (fdt_path_offset(fdt, "/aliases") < 0)
-		return;
+	fdt_increase_size(fdt, 256);
+
+	has_aliases = fdt_path_offset(fdt, "/aliases") >= 0;
 
 	/* Cycle through all aliases */
-	for (prop = 0; ; prop++) {
+	for (prop = 0; has_aliases; prop++) {
 		const char *name;
 
 		/* FDT might have been edited, recompute the offset */
@@ -628,9 +635,62 @@ void fdt_fixup_ethernet(void *fdt)
 			}
 
 			do_fixup_by_path(fdt, path, "mac-address",
-					 &mac_addr, 6, 0);
+					 &mac_addr, 6, 1);
 			do_fixup_by_path(fdt, path, "local-mac-address",
 					 &mac_addr, 6, 1);
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_MTD) && !eth_env_get_enetaddr("ethaddr", env_mac)) {
+		struct mtd_info *mtd;
+		size_t retlen;
+		uchar buf[0x800];
+
+		mtd_probe_devices();
+
+		mtd = get_mtd_device_nm("factory");
+		if (IS_ERR_OR_NULL(mtd))
+			mtd = get_mtd_device_nm("Factory");
+
+		if (!IS_ERR_OR_NULL(mtd)) {
+			if (!mtd_read(mtd, 0, sizeof(buf), &retlen, buf) &&
+			    retlen >= 0x2A + ARP_HLEN &&
+			    is_valid_ethaddr(buf + 0x2A)) {
+				char envbuf[ARP_HLEN_ASCII + 1];
+
+				sprintf(envbuf, "%pM", buf + 0x2A);
+				env_set("ethaddr", envbuf);
+			}
+
+			put_mtd_device(mtd);
+		}
+	}
+
+	if (eth_env_get_enetaddr("ethaddr", env_mac)) {
+		memcpy(mac_addr, env_mac, ARP_HLEN);
+
+		do_fixup_by_path(fdt, "/soc/ethernet@15100000", "mac-address",
+				 &mac_addr, 6, 1);
+		do_fixup_by_path(fdt, "/soc/ethernet@15100000",
+				 "local-mac-address", &mac_addr, 6, 1);
+		do_fixup_by_path(fdt, "/ethernet@15100000", "mac-address",
+				 &mac_addr, 6, 1);
+		do_fixup_by_path(fdt, "/ethernet@15100000", "local-mac-address",
+				 &mac_addr, 6, 1);
+
+		node = -1;
+		while (1) {
+			node = fdt_next_node(fdt, node, NULL);
+			if (node < 0)
+				break;
+
+			addr = fdtdec_get_addr_size_auto_noparent(fdt, node, "reg",
+								  0, NULL, false);
+			if (addr != 0x15100000)
+				continue;
+
+			fdt_setprop(fdt, node, "mac-address", &mac_addr, 6);
+			fdt_setprop(fdt, node, "local-mac-address", &mac_addr, 6);
 		}
 	}
 }

@@ -11,8 +11,8 @@
 #include <env.h>
 #include <image.h>
 #include <linux/types.h>
-#include <cli.h>
 #include <linux/delay.h>
+#include <stdio.h>
 
 #include "load_data.h"
 #include "colored_print.h"
@@ -21,32 +21,43 @@
 static const struct data_part_entry *upgrade_parts;
 static u32 num_parts;
 
+static bool prompt_post_action(const struct data_part_entry *dpe)
+{
+	if (dpe->post_action == UPGRADE_ACTION_REBOOT)
+		return confirm_yes("Reboot after upgrading? (Y/n):");
+
+	if (dpe->post_action == UPGRADE_ACTION_BOOT)
+		return confirm_yes("Run image after upgrading? (Y/n):");
+
+	if (dpe->post_action == UPGRADE_ACTION_CUSTOM) {
+		if (dpe->custom_action_prompt)
+			return confirm_yes(dpe->custom_action_prompt);
+
+		return true;
+	}
+
+	return false;
+}
 
 static int do_post_action(const struct data_part_entry *dpe, const void *data,
 			  size_t size)
 {
-	int i;
+	int ret;
 
-	if (dpe->do_post_action)
-		dpe->do_post_action(dpe->priv, dpe, data, size);
+	if (dpe->do_post_action) {
+		ret = dpe->do_post_action(dpe->priv, dpe, data, size);
 
-	printf("\n*** 更新成功！***\n");
-	printf("系统将在 5 秒后自动返回主菜单。\n");
-	printf("此时按 [任意键] 可进入命令行控制台 (MT7981>)\n\n");
-
-	for (i = 5; i > 0; i--) {
-		printf("\r倒计时: %2d 秒 ", i);
-		if (tstc()) {
-			getchar(); // 消耗输入
-			printf("\n\n已中断。进入命令行控制台...\n\n");
-			env_set("bootmenu_exit", "1");
-			return CMD_RET_SUCCESS;
-		}
-		mdelay(1000);
+		if (dpe->post_action == UPGRADE_ACTION_CUSTOM)
+			return ret;
 	}
 
-	printf("\r倒计时:  0 秒 \n");
-	printf("\n正在返回主菜单 ...\n\n");
+	if (dpe->post_action == UPGRADE_ACTION_REBOOT) {
+		printf("Rebooting ...\n\n");
+		return run_command("reset", 0);
+	}
+
+	if (dpe->post_action == UPGRADE_ACTION_BOOT)
+		return run_command("mtkboardboot", 0);
 
 	return CMD_RET_SUCCESS;
 }
@@ -57,14 +68,14 @@ static const struct data_part_entry *select_part(void)
 	char c;
 
 	printf("\n");
-	cprintln(PROMPT, "可用于更新的分区:");
+	cprintln(PROMPT, "Available parts to be upgraded:");
 
 	for (i = 0; i < num_parts; i++)
 		printf("    %d - %s\n", i, upgrade_parts[i].name);
 
 	while (1) {
 		printf("\n");
-		cprint(PROMPT, "请选择一个分区:");
+		cprint(PROMPT, "Select a part:");
 		printf(" ");
 
 		c = getchar();
@@ -77,7 +88,7 @@ static const struct data_part_entry *select_part(void)
 
 	i = c - '0';
 	if (c < '0' || i >= num_parts) {
-		cprintln(ERROR, "*** 无效的选择！ ***");
+		cprintln(ERROR, "*** Invalid selection! ***");
 		return NULL;
 	}
 
@@ -96,7 +107,7 @@ static const struct data_part_entry *find_part(const char *abbr)
 			return &upgrade_parts[i];
 	}
 
-	cprintln(ERROR, "*** 无效的更新分区！ ***");
+	cprintln(ERROR, "*** Invalid upgrading part! ***");
 
 	return NULL;
 }
@@ -107,6 +118,7 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 	const struct data_part_entry *dpe = NULL;
 	ulong data_load_addr;
 	size_t data_size = 0;
+	bool do_action;
 
 	board_upgrade_data_parts(&upgrade_parts, &num_parts);
 
@@ -124,9 +136,10 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** 正在更新 %s ***", dpe->name);
+	cprintln(PROMPT, "*** Upgrading %s ***", dpe->name);
 	printf("\n");
 
+	do_action = prompt_post_action(dpe);
 
 	/* Set load address */
 #if defined(CONFIG_SYS_LOAD_ADDR)
@@ -140,7 +153,7 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** 已加载 %zd (0x%zx) 字节，内存地址 0x%08lx ***",
+	cprintln(PROMPT, "*** Loaded %zd (0x%zx) bytes at 0x%08lx ***",
 		 data_size, data_size, data_load_addr);
 	printf("\n");
 
@@ -158,9 +171,30 @@ static int do_mtkupgrade(struct cmd_tbl *cmdtp, int flag, int argc,
 		return CMD_RET_FAILURE;
 
 	printf("\n");
-	cprintln(PROMPT, "*** %s 更新已完成！ ***", dpe->name);
+	cprintln(PROMPT, "*** %s 升级完成! ***", dpe->name);
 
-	return do_post_action(dpe, (void *)data_load_addr, data_size);
+	/* 5 秒倒计时：无操作返回菜单，按键进入命令行 */
+	printf("\n按任意键进入命令行 (5秒后自动返回菜单)...\n");
+	{
+		int i;
+		int key_pressed = 0;
+		for (i = 5; i > 0; i--) {
+			printf("\r将在 %d 秒后返回主菜单...", i);
+			if (tstc()) {
+				getchar();  /* 消费按键 */
+				key_pressed = 1;
+				break;
+			}
+			mdelay(1000);
+		}
+		printf("\n");
+		if (key_pressed) {
+			printf("进入命令行模式...\n");
+			return CMD_RET_FAILURE;  /* 返回失败会退出到命令行 */
+		}
+		/* 直接重新进入菜单 */
+		return run_command("mtkautoboot", 0);
+	}
 }
 
 U_BOOT_CMD(mtkupgrade, 2, 0, do_mtkupgrade,

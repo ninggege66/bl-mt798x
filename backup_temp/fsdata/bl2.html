@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>BL2 更新</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="/main.js"></script>
+</head>
+
+<body onload="getversion()">
+	<div id="m">
+		<h1>ATF BL2 更新</h1>
+		<p id="hint">
+			您正在准备更新设备的 <strong>BL2 (第一级引导程序)</strong>。<br>
+			这是系统启动的最底层部分。
+		</p>
+		<form id="form">
+			<input id="file" type="file" name="bl2">
+			<input type="button" value="上传 BL2" onclick="upload('bl2')">
+		</form>
+		<div>
+			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
+		</div>
+		<div id="size" style="display: none;">大小: xxxx</div>
+		<div id="md5" style="display: none;">校验值: xxxx</div>
+		<div id="upgrade" style="display: none;">
+			<p>验证通过！点击下方按钮开始更新。</p>
+			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
+		</div>
+		<div class="i w">
+			<strong>致命风险警告</strong>
+			<ul>
+				<li>更新 BL2 极其危险。一旦失败且无法恢复，硬件将永久损坏。</li>
+				<li>请确认这是针对 K25pro 的特定版本。</li>
+			</ul>
+		</div>
+		<div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+			企业专用K25pro专业网络设备
+		</div>
+	</div>
+	<div id="version"></div>
+</body>
+
+</html>
