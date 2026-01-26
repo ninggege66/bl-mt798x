@@ -204,3 +204,83 @@ function createStars() {
         body.appendChild(star);
     }
 }
+
+function applyMac() {
+    var eth0mac = document.getElementById('eth0mac').value.trim();
+    var eth1mac = document.getElementById('eth1mac').value.trim();
+    var hint = document.getElementById('mac_hint');
+
+    // 基础正则验证 (支持留空)
+    var macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+
+    if (eth0mac && !macRegex.test(eth0mac)) {
+        alert('eth0 MAC 格式不正确！');
+        return;
+    }
+    if (eth1mac && !macRegex.test(eth1mac)) {
+        alert('eth1 MAC 格式不正确！');
+        return;
+    }
+
+    if (!confirm('确认将 MAC 地址应用到系统环境变量？')) return;
+
+    hint.style.color = '#00ff00';
+    hint.innerHTML = '正在保存 MAC 地址...';
+
+    var formData = new FormData();
+    formData.append('eth0mac', eth0mac);
+    formData.append('eth1mac', eth1mac);
+
+    ajax({
+        method: 'POST',
+        url: '/setmac',
+        data: formData,
+        done: function (res) {
+            if (res === 'ok') {
+                hint.innerHTML = 'MAC 地址已成功保存并同步！';
+                alert('MAC 地址保存成功！重启后生效。');
+            } else {
+                hint.style.color = '#ff4444';
+                hint.innerHTML = '保存失败: ' + res;
+            }
+        },
+        fail: function (s) {
+            hint.style.color = '#ff4444';
+            hint.innerHTML = '请求失败，错误代码: ' + s;
+        }
+    });
+}
+
+function generateRandomMac(targetId) {
+    var hexDigits = "0123456789ABCDEF";
+    var mac = "";
+    for (var i = 0; i < 6; i++) {
+        var byte = "";
+        if (i === 0) {
+            // 设置第 1 字节：必须是偶数 (Unicast)，且建议设置局部地址位 (Locally Administered)
+            // 我们常用的随机地址第 1 字节通常是 02, 06, 0A, 0E 等
+            var firstByteOptions = ["02", "06", "0A", "0E", "12", "22", "32"];
+            byte = firstByteOptions[Math.floor(Math.random() * firstByteOptions.length)];
+        } else {
+            byte = hexDigits.charAt(Math.floor(Math.random() * 16)) +
+                hexDigits.charAt(Math.floor(Math.random() * 16));
+        }
+        mac += byte + (i === 5 ? "" : ":");
+    }
+    document.getElementById(targetId).value = mac;
+}
+
+function rebootDevice() {
+    if (!confirm('设备将立即重启，确认吗？')) return;
+
+    ajax({
+        url: '/reboot',
+        done: function () {
+            alert('重启指令已发送，正在重新启动...');
+            setTimeout(function () { location.reload(); }, 5000);
+        },
+        fail: function () {
+            alert('重启指令发送失败，请手动按复位键！');
+        }
+    });
+}

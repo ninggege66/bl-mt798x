@@ -4,53 +4,224 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>K25pro 专业网络设备 - 救砖控制台</title>
+	<title>K25PRO ULTRA-PRO TERMINAL V3.7</title>
 	<link rel="stylesheet" href="/style.css">
 	<script src="/main.js"></script>
 </head>
 
 <body onload="startup()">
-	<div id="m">
-		<h1>固件更新终端</h1>
-		<p id="hint">
-			您正在准备更新设备固件。<br>
-			请从本地磁盘选择固件文件，然后点击 <strong>上传</strong> 按钮。
-		</p>
-		<form id="form">
-			<div id="mtd_layout" style="display: none;">
-				<div id="current_mtd_layout"></div>
-				<br>
-				选择分区布局:
-				<select id="mtd_layout_label" name="mtd_layout_label"></select>
-				<br><br>
+	<div id="particles"></div>
+
+	<nav id="sidebar">
+		<div class="brand">K25PRO BEYOND</div>
+		<div class="nav-item active" onclick="navTo('sys', this)"> ✺ 系统监测中心</div>
+		<div class="nav-item" onclick="navTo('led', this)"> 💡 硬件 LED 控制</div>
+		<div class="nav-item" onclick="navTo('fw', this)"> ⚚ 固件引擎注入</div>
+		<div class="nav-item" onclick="navTo('mac', this)"> ⎙ 网口身份管理</div>
+		<div class="nav-item" onclick="navTo('adv', this)"> ⚒ 底层分区架构</div>
+
+		<div id="version">V3.7 - DEFINITIVE EDITION<br>宁哥：1562703382</div>
+	</nav>
+
+	<main id="content">
+		<!-- Section 1: Detailed Telemetry Grid -->
+		<section id="sec-sys" class="animate-in">
+			<h2>实时硬件全息态势</h2>
+			<div class="info-grid">
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">PROCESSOR HUB</div>
+					<div class="card-val">MT7981B FILOGIC</div>
+					<div class="card-sub"><span class="status-pulse"></span>2x Cortex-A53 @ 1.3GHz TURBO</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">VOLATILE STORAGE</div>
+					<div class="card-val">512MB DDR3L SDRAM</div>
+					<div class="card-sub"><span class="status-pulse"></span>1866Mbps | ECC RELIABLE</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">NAND ARCHITECTURE</div>
+					<div class="card-val">128MB SPI-NAND</div>
+					<div class="card-sub"><span class="status-pulse"></span>NMBM RELIABILITY: 100%</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">WIRELESS CHIPSET</div>
+					<div class="card-val">MEDIATEK MT7976</div>
+					<div class="card-sub"><span class="status-pulse"></span>AX3000 DUAL-BAND RF</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">SWITCH MATRIX</div>
+					<div class="card-val">MEDIATEK MT7531</div>
+					<div class="card-sub"><span class="status-pulse"></span>HW BRIDGE | 3x PHYSICAL</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">NETWORK TOPOLOGY</div>
+					<div class="card-val">1000M BASE-T</div>
+					<div class="card-sub"><span class="status-pulse"></span>WAN LINK: STABLE 1G</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">LAN GRID 0-1</div>
+					<div class="card-val">DUAL GE PORTS</div>
+					<div class="card-sub"><span class="status-pulse"></span>INTERNAL BUS MAPPED</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">THERMAL STATUS</div>
+					<div class="card-val">SAFE / OPTIMAL</div>
+					<div class="card-sub"><span class="status-pulse"></span>SENSOR CALIBRATED</div>
+				</div>
+				<div class="cyber-card pulse-hover">
+					<div class="card-title">POWER GRID</div>
+					<div class="card-val">STABLE 12.0V</div>
+					<div class="card-sub"><span class="status-pulse"></span>VOLTAGE REGULATION OK</div>
+				</div>
+				<div class="cyber-card pulse-hover" style="border-color: var(--neon-purple);">
+					<div class="card-title" style="color:var(--neon-purple)">BOOT KERNEL</div>
+					<div class="card-val">2023.07-UBOOT</div>
+					<div class="card-sub"><span class="status-pulse"
+							style="background:var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple)"></span>FAILSAFE
+						SECURE LINK</div>
+				</div>
 			</div>
-			<input id="file" type="file" name="firmware">
-			<input type="button" value="上传文件" onclick="upload('firmware')">
-		</form>
-		<div>
-			<div class="bar" id="bar" style="display: none; --percent: 0;"></div>
-		</div>
-		<div id="size" style="display: none;">文件大小: xxxx</div>
-		<div id="md5" style="display: none;">校验值(MD5): xxxx</div>
-		<div id="mtd" style="display: none;">分区布局: xxxx</div>
-		<div id="upgrade" style="display: none;">
-			<p>验证通过！点击下方按钮开始写入固件。</p>
-			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
-		</div>
-		<div class="i w">
-			<strong>安全警告</strong>
-			<ul>
-				<li>更新过程中请务必保持电源连接，切勿断电</li>
-				<li>更新完成后，设备将自动重启进入新系统</li>
-				<li>请确保上传的文件适用于 K25pro，错误的固件可能会导致无法启动</li>
-			</ul>
-		</div>
-		<div style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
-			企业专用K25pro专业网络设备<br>
-			BUILD: 2026.01.19 - K25PRO-PROFESSIONAL
-		</div>
-	</div>
-	<div id="version">控制台版本: v2025.07-MTK</div>
+		</section>
+
+		<!-- Section 2: LED Control Center -->
+		<section id="sec-led" class="animate-in">
+			<h2>超感官跑马灯编排</h2>
+			<div class="i">
+				<strong>模式设置 (PATTERN SELECT)</strong>
+				<br><br>
+				<input type="button" class="button" value="▶ 循环跑马" onclick="setMarquee('loop')">
+				<input type="button" class="button" value="↕ 从上往下" onclick="setMarquee('down')">
+				<input type="button" class="button" value="↕ 从下往上" onclick="setMarquee('up')">
+				<input type="button" class="button" value="⚡ 全速闪烁" onclick="setMarquee('blink')">
+				<input type="button" class="button" value="☀ 全亮模式" onclick="setMarquee('allon')">
+				<input type="button" class="button danger-btn" value="⏹ 关闭效果" onclick="setMarquee('stop')">
+
+				<div style="margin-top: 35px;">
+					跑马间隔 (Delay): <input type="number" id="led_speed" value="600" min="50" step="50"
+						style="width: 150px;"> ms
+				</div>
+
+				<div class="led-box">
+					<div class="led-id" id="led-25"><span>PWR</span></div>
+					<div class="led-id" id="led-24"><span>NET</span></div>
+					<div class="led-id" id="led-23"><span>SIFI</span></div>
+					<div class="led-id" id="led-12"><span>SIG2</span></div>
+					<div class="led-id" id="led-13"><span>SIG1</span></div>
+					<div class="led-id" id="led-10"><span>5G</span></div>
+				</div>
+				<p style="color:#555; font-size:12px; margin-top:25px;">* 4G(GPIO 11) 灯珠已在 C 语言后台强制静默。5G 映射已修复为 GPIO 10。
+				</p>
+			</div>
+		</section>
+
+		<!-- Section 3: Firmware Injection (Single Page Inline Flash) -->
+		<section id="sec-fw" class="animate-in">
+			<h2>固件系统核心注入</h2>
+			<div class="i">
+				<p>上传 K25PRO 系统镜像 (.bin) 开始烧录。所有状态反馈将在按钮下方实时显示。</p>
+				<div id="mtd_layout" style="display: none; margin-bottom: 25px;">
+					存储分区架构: <select id="mtd_layout_label" style="padding: 12px;"></select>
+				</div>
+				<input id="file" type="file" name="firmware"
+					style="width: 100%; border:1px dashed #444; padding:25px; background:#000;">
+				<br><br>
+				<div class="bar-container" style="display: none;" id="up-container">
+					<div class="progress-pct" id="up-pct">0%</div>
+					<div class="bar" id="up-bar" style="--percent: 0;"></div>
+				</div>
+				<input type="button" id="btn-up" class="button primary-btn" value="[ EXECUTE SYSTEM UPLOAD ]"
+					onclick="upload('firmware', 'file', 'up-msg', 'fw-confirm')">
+				<div id="up-msg" class="msg"></div>
+
+				<div id="fw-confirm" style="display: none; margin-top:30px;">
+					<div class="i" style="border-color: #3fb950; background:rgba(63,185,80,0.05)">
+						<div id="fw-size" style="font-weight:bold; margin-bottom:10px;"></div>
+						<div id="fw-md5" style="color:var(--accent-color); font-family:monospace;"></div>
+						<br>
+						<input type="button" id="btn-flash" class="button"
+							style="background:#3fb950; color:white; border:none;" value="AUTHORIZE NAND OVERWRITE"
+							onclick="flashInline('flash-msg')">
+					</div>
+				</div>
+				<div id="flash-msg" class="msg"></div>
+			</div>
+		</section>
+
+		<!-- Section 4: MAC Control -->
+		<section id="sec-mac" class="animate-in">
+			<h2>网际物理标识 (MAC) 配置</h2>
+			<div class="i">
+				<table style="width: 100%;">
+					<tr>
+						<th>INTERFACES</th>
+						<th>VIRTUAL HARDWARE ADDRESS</th>
+						<th>CONTROLS</th>
+					</tr>
+					<tr>
+						<td>EXTERNAL-WAN</td>
+						<td><input type="text" id="wan_mac" spellcheck="false" placeholder="SYNCING..."></td>
+						<td><input type="button" value="RAND" onclick="generateMAC('wan_mac')"></td>
+					</tr>
+					<tr>
+						<td>INTERNAL-LAN1</td>
+						<td><input type="text" id="lan1_mac" spellcheck="false" placeholder="SYNCING..."></td>
+						<td><input type="button" value="RAND" onclick="generateMAC('lan1_mac')"></td>
+					</tr>
+					<tr>
+						<td>INTERNAL-LAN2</td>
+						<td><input type="text" id="lan2_mac" spellcheck="false" placeholder="SYNCING..."></td>
+						<td><input type="button" value="RAND" onclick="generateMAC('lan2_mac')"></td>
+					</tr>
+				</table>
+				<div id="mac-msg" class="msg"></div>
+			</div>
+			<div style="margin-top: 30px; text-align: right;">
+				<input type="button" class="button" value="RESTORE PROTOCOL" onclick="setDefaultMACs()">
+				<input type="button" class="button" value="SAVE TO ROM" onclick="saveMACs()">
+				<input type="button" class="button danger-btn" value="SAVE & REBOOT" onclick="saveAndReboot()">
+			</div>
+		</section>
+
+		<!-- Section 5: Advanced (Restored GPT/BL2/FIP) -->
+		<section id="sec-adv" class="animate-in">
+			<h2>底层全量分区重构 (Forge)</h2>
+			<div class="i" style="border-color: var(--neon-pink);">
+				<strong>WARNING: SECTOR LEVEL LOGICAL WRITE</strong>
+				<table style="margin-top:20px; width:100%;">
+					<tr>
+						<td>PRIMARY BOOT (BL2)</td>
+						<td><input type="file" id="bl2_f"></td>
+						<td><input type="button" value="WRITE" onclick="upload('bl2','bl2_f','adv-msg','adv-confirm')">
+						</td>
+					</tr>
+					<tr>
+						<td>SYSTEM KERNEL (FIP)</td>
+						<td><input type="file" id="fip_f"></td>
+						<td><input type="button" value="WRITE" onclick="upload('fip','fip_f','adv-msg','adv-confirm')">
+						</td>
+					</tr>
+					<tr>
+						<td>STORAGE TABLE (GPT)</td>
+						<td><input type="file" id="gpt_f"></td>
+						<td><input type="button" value="WRITE" onclick="upload('gpt','gpt_f','adv-msg','adv-confirm')">
+						</td>
+					</tr>
+				</table>
+				<div id="adv-msg" class="msg"></div>
+
+				<div id="adv-confirm" style="display: none; margin-top:30px;">
+					<div class="i" style="border-color: #f85149; background:rgba(248,81,73,0.05)">
+						<div id="adv-size" style="font-weight:bold; margin-bottom:10px;"></div>
+						<div id="adv-md5" style="color:var(--neon-pink); font-family:monospace;"></div>
+						<br>
+						<input type="button" id="btn-flash-adv" class="button danger-btn" value="CONFIRM CRITICAL WRITE"
+							onclick="flashInline('adv-flash-msg')">
+					</div>
+				</div>
+				<div id="adv-flash-msg" class="msg"></div>
+			</div>
+		</section>
+	</main>
 </body>
 
 </html>

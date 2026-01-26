@@ -37,6 +37,38 @@
 			<p>验证通过！点击下方按钮开始写入固件。</p>
 			<button class="button" onclick="location = '/flashing.html'">开始更新</button>
 		</div>
+
+		<div class="i" style="margin-top: 15px;">
+			<strong>MAC 地址配置</strong>
+			<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+				<div style="display: flex; align-items: center; justify-content: space-between;">
+					<label>WAN/eth0:</label>
+					<div style="display: flex; gap: 5px;">
+						<input id="eth0mac" type="text" placeholder="留空则随机"
+							style="width: 130px; height: 24px; padding: 0 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;">
+						<button class="button"
+							style="width: 40px; height: 26px; font-size: 10px; padding: 0; line-height: 26px;"
+							onclick="generateRandomMac('eth0mac')">随机</button>
+					</div>
+				</div>
+				<div style="display: flex; align-items: center; justify-content: space-between;">
+					<label>LAN/eth1:</label>
+					<div style="display: flex; gap: 5px;">
+						<input id="eth1mac" type="text" placeholder="留空则随机"
+							style="width: 130px; height: 24px; padding: 0 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;">
+						<button class="button"
+							style="width: 40px; height: 26px; font-size: 10px; padding: 0; line-height: 26px;"
+							onclick="generateRandomMac('eth1mac')">随机</button>
+					</div>
+				</div>
+				<div style="display: flex; justify-content: space-between; margin-top: 5px;">
+					<button class="button" style="width: 48%; height: 32px; font-size: 14px; padding: 0;"
+						onclick="applyMac()">保存 MAC</button>
+					<button class="button" style="width: 48%; height: 32px; font-size: 14px; padding: 0;"
+						onclick="rebootDevice()">重启设备</button>
+				</div>
+			</div>
+		</div>
 		<div class="i w">
 			<strong>安全警告</strong>
 			<ul>

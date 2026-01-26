@@ -12,6 +12,7 @@
 #include <env.h>
 #include <malloc.h>
 #include <net.h>
+#include <asm/gpio.h>
 #include <net/mtk_tcp.h>
 #include <net/mtk_httpd.h>
 #include <u-boot/md5.h>
@@ -20,6 +21,7 @@
 #include <vsprintf.h>
 #include <version_string.h>
 #include <failsafe/fw_type.h>
+#include <linux/delay.h>
 
 #include "../board/mediatek/common/boot_helper.h"
 #include "fs.h"
@@ -370,9 +372,157 @@ static void mtd_layout_handler(enum httpd_uri_handler_status status,
 
 	response->size = strlen(response->data);
 
+	response->info.content_type = "text/plain";
+}
+
+static void mac_get_handler(enum httpd_uri_handler_status status,
+	struct httpd_request *request,
+	struct httpd_response *response)
+{
+	static char resp[192];
+	const char *wan_mac, *lan1_mac, *lan2_mac;
+
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	// eth1addr = WAN(eth0), ethaddr = LAN(lan1), eth2addr = LAN(lan2)
+	wan_mac = env_get("eth1addr");
+	lan1_mac = env_get("ethaddr");
+	lan2_mac = env_get("eth2addr");
+
+	if (!wan_mac) wan_mac = "62:88:9f:78:7d:a4";
+	if (!lan1_mac) lan1_mac = "62:88:9f:78:7d:a5";
+	if (!lan2_mac) lan2_mac = "62:88:9f:78:7d:a6";
+
+	sprintf(resp, "%s;%s;%s", wan_mac, lan1_mac, lan2_mac);
+
+	response->data = resp;
+	response->size = strlen(response->data);
+
 	response->info.code = 200;
 	response->info.connection_close = 1;
 	response->info.content_type = "text/plain";
+}
+
+static void mac_set_handler(enum httpd_uri_handler_status status,
+	struct httpd_request *request,
+	struct httpd_response *response)
+{
+	struct httpd_form_value *wan_val, *lan1_val, *lan2_val;
+	int saved = 0;
+
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	response->info.code = 200;
+	response->info.connection_close = 1;
+	response->info.content_type = "text/plain";
+
+	wan_val = httpd_request_find_value(request, "wan_mac");
+	if (wan_val && strlen(wan_val->data) >= 17) {
+		env_set("eth1addr", wan_val->data);
+		saved = 1;
+	}
+
+	lan1_val = httpd_request_find_value(request, "lan1_mac");
+	if (lan1_val && strlen(lan1_val->data) >= 17) {
+		env_set("ethaddr", lan1_val->data);
+		saved = 1;
+	}
+
+	lan2_val = httpd_request_find_value(request, "lan2_mac");
+	if (lan2_val && strlen(lan2_val->data) >= 17) {
+		env_set("eth2addr", lan2_val->data);
+		saved = 1;
+	}
+
+	if (saved) {
+		env_save();
+		response->data = "success";
+	} else {
+		response->data = "fail";
+	}
+
+	response->size = strlen(response->data);
+}
+
+static void reboot_handler(enum httpd_uri_handler_status status,
+	struct httpd_request *request,
+	struct httpd_response *response)
+{
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	response->data = "rebooting";
+	response->size = strlen(response->data);
+
+	response->info.code = 200;
+	response->info.connection_close = 1;
+	response->info.content_type = "text/plain";
+
+	upgrade_success = 1;
+	fw_type = FW_TYPE_FW; // Force reboot via upgrade_success path in do_httpd
+	net_set_state(NETLOOP_SUCCESS);
+}
+
+// LED Control Handler for Marquee
+static void led_set_handler(enum httpd_uri_handler_status status,
+	struct httpd_request *request,
+	struct httpd_response *response)
+{
+	struct httpd_form_value *pin_val, *state_val;
+	int pin, state;
+
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	response->info.code = 200;
+	response->info.connection_close = 1;
+	response->info.content_type = "text/plain";
+
+	pin_val = httpd_request_find_value(request, "pin");
+	state_val = httpd_request_find_value(request, "state");
+
+	if (pin_val && state_val) {
+		pin = simple_strtol(pin_val->data, NULL, 10);
+		state = simple_strtol(state_val->data, NULL, 10);
+		
+		gpio_request(pin, "failsafe_led");
+		gpio_direction_output(pin, state);
+		response->data = "ok";
+	} else {
+		response->data = "miss";
+	}
+
+	response->size = strlen(response->data);
+}
+
+// Inline Flash Trigger - FIXED for reliability
+static void do_flash_handler(enum httpd_uri_handler_status status,
+	struct httpd_request *request,
+	struct httpd_response *response)
+{
+	if (status != HTTP_CB_NEW)
+		return;
+
+	// K25PRO Specific: Kill 4G (GPIO 11) before flash
+	gpio_request(11, "led4g_off");
+	gpio_direction_output(11, 1);
+
+	response->status = HTTP_RESP_STD;
+	response->info.code = 200;
+	response->info.connection_close = 1;
+	response->info.content_type = "text/plain";
+	response->data = "commit_accepted";
+	response->size = strlen(response->data);
+
+	// Exit the network loop so the main loop can start the flash/write
+	upgrade_success = 1;
+	net_set_state(NETLOOP_SUCCESS);
 }
 
 int start_web_failsafe(void)
@@ -389,6 +539,23 @@ int start_web_failsafe(void)
 		return -1;
 	}
 
+	// K25PRO LED Initial Sequence (Aligned to PCB)
+	gpio_request(11, "led4g_off");
+	gpio_direction_output(11, 1); // Turn OFF 4G (GPIO 11)
+	gpio_request(10, "led5g");
+	gpio_direction_output(10, 1); // Turn OFF 5G (GPIO 10)
+	gpio_request(25, "pwr_led");
+	gpio_request(24, "net_led");
+	gpio_request(23, "sifi_led");
+	gpio_request(12, "sig2_led");
+	gpio_request(13, "sig1_led");
+
+	gpio_direction_output(25, 0); // PWR ON (Active Low)
+	gpio_direction_output(24, 1); // NET OFF
+	gpio_direction_output(23, 1); // SIFI OFF
+	gpio_direction_output(12, 1); // SIG2 OFF
+	gpio_direction_output(13, 1); // SIG1 OFF
+
 	httpd_register_uri_handler(inst, "/", &index_handler, NULL);
 	httpd_register_uri_handler(inst, "/bl2.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/booting.html", &html_handler, NULL);
@@ -397,6 +564,11 @@ int start_web_failsafe(void)
 	httpd_register_uri_handler(inst, "/fail.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/flashing.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/getmtdlayout", &mtd_layout_handler, NULL);
+	httpd_register_uri_handler(inst, "/getmac", &mac_get_handler, NULL);
+	httpd_register_uri_handler(inst, "/setmac", &mac_set_handler, NULL);
+	httpd_register_uri_handler(inst, "/setled", &led_set_handler, NULL);
+	httpd_register_uri_handler(inst, "/doflash", &do_flash_handler, NULL);
+	httpd_register_uri_handler(inst, "/reboot", &reboot_handler, NULL);
 #ifdef CONFIG_MTK_BOOTMENU_MMC
 	httpd_register_uri_handler(inst, "/gpt.html", &html_handler, NULL);
 #endif
@@ -435,10 +607,15 @@ static int do_httpd(struct cmd_tbl *cmdtp, int flag, int argc,
 	ret = start_web_failsafe();
 
 	if (upgrade_success) {
-		if (fw_type == FW_TYPE_INITRD)
+		if (fw_type == FW_TYPE_INITRD) {
 			boot_from_mem((ulong)upload_data);
-		else
+		} else {
+			printf("\nInitiating Firmware Write To NAND...\n");
+			failsafe_write_image(upload_data, upload_size, fw_type);
+			printf("Write Complete. Rebooting...\n");
+			mdelay(2000);
 			do_reset(NULL, 0, 0, NULL);
+		}
 	}
 
 	return ret;

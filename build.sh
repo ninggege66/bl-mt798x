@@ -122,13 +122,12 @@ fi
 ATF_RAM_CFG="${SOC}_${BOARD}_ram_defconfig"
 if [ -f "$ATF_DIR/configs/$ATF_RAM_CFG" ]; then
 	echo "Building RAM boot BL2: $ATF_RAM_CFG"
-	make -C "$ATF_DIR" -f "$ATF_MKFILE" clean CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" PLAT="$SOC"
-	rm -rf "$ATF_DIR/build"
-	make -C "$ATF_DIR" -f "$ATF_MKFILE" "$ATF_RAM_CFG" CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" PLAT="$SOC"
-	make -C "$ATF_DIR" -f "$ATF_MKFILE" bl2 CONFIG_CROSS_COMPILER="$TOOLCHAIN" CROSS_COMPILER="$TOOLCHAIN" PLAT="$SOC" -j $(nproc)
-	if [ -f "$ATF_DIR/build/$SOC/release/bl2.bin" ]; then
+	make -C "$ATF_DIR" -f "$ATF_MKFILE" distclean
+	make -C "$ATF_DIR" -f "$ATF_MKFILE" "$ATF_RAM_CFG" CROSS_COMPILE="$TOOLCHAIN" PLAT="$SOC"
+	make -C "$ATF_DIR" -f "$ATF_MKFILE" all CROSS_COMPILE="$TOOLCHAIN" PLAT="$SOC" BUILD_BASE="./build-ram" -j $(nproc) || true
+	if [ -f "$ATF_DIR/build-ram/$SOC/release/bl2.bin" ]; then
 		RAM_BL2_NAME="${SOC}_${BOARD}-bl2-ram.bin"
-		cp -f "$ATF_DIR/build/$SOC/release/bl2.bin" "output/$RAM_BL2_NAME"
+		cp -f "$ATF_DIR/build-ram/$SOC/release/bl2.bin" "output/$RAM_BL2_NAME"
 		echo "$RAM_BL2_NAME build done"
 	else
 		echo "RAM boot bl2 build fail!"

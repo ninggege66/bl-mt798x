@@ -375,6 +375,58 @@ static void mtd_layout_handler(enum httpd_uri_handler_status status,
 	response->info.content_type = "text/plain";
 }
 
+static void setmac_handler(enum httpd_uri_handler_status status,
+			   struct httpd_request *request,
+			   struct httpd_response *response)
+{
+	struct httpd_form_value *eth0mac, *eth1mac;
+
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	response->info.code = 200;
+	response->info.connection_close = 1;
+
+	eth0mac = httpd_request_find_value(request, "eth0mac");
+	eth1mac = httpd_request_find_value(request, "eth1mac");
+
+	if (eth0mac && eth0mac->size > 0) {
+		printf("httpd: setting ethaddr to %s\n", eth0mac->data);
+		env_set("ethaddr", eth0mac->data);
+	}
+
+	if (eth1mac && eth1mac->size > 0) {
+		printf("httpd: setting eth1addr to %s\n", eth1mac->data);
+		env_set("eth1addr", eth1mac->data);
+	}
+
+	if ((eth0mac && eth0mac->size > 0) || (eth1mac && eth1mac->size > 0)) {
+		env_save();
+	}
+
+	response->data = "ok";
+	response->size = strlen(response->data);
+}
+
+static void reboot_handler(enum httpd_uri_handler_status status,
+			   struct httpd_request *request,
+			   struct httpd_response *response)
+{
+	if (status != HTTP_CB_NEW)
+		return;
+
+	response->status = HTTP_RESP_STD;
+	response->info.code = 200;
+	response->info.connection_close = 1;
+	response->data = "rebooting";
+	response->size = strlen(response->data);
+
+	upgrade_success = 1;
+	fw_type = FW_TYPE_FW; // Dummy type just to trigger do_reset in do_httpd loop
+	mtk_tcp_close_all_conn();
+}
+
 int start_web_failsafe(void)
 {
 	struct httpd_instance *inst;
@@ -406,6 +458,8 @@ int start_web_failsafe(void)
 	httpd_register_uri_handler(inst, "/style.css", &style_handler, NULL);
 	httpd_register_uri_handler(inst, "/uboot.html", &html_handler, NULL);
 	httpd_register_uri_handler(inst, "/upload", &upload_handler, NULL);
+	httpd_register_uri_handler(inst, "/setmac", &setmac_handler, NULL);
+	httpd_register_uri_handler(inst, "/reboot", &reboot_handler, NULL);
 	httpd_register_uri_handler(inst, "/version", &version_handler, NULL);
 	httpd_register_uri_handler(inst, "", &not_found_handler, NULL);
 

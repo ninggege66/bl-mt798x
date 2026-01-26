@@ -1,224 +1,282 @@
 /* 
- * Premium High-Tech main.js with Tech animations
- * Created by Antigravity for K25pro
- * Developed by: 企业专用K25pro专业网络设备
+ * K25PRO Cyber-Terminal Main Logic V3.7 - DEFINITIVE HARMONY
+ * Precision Physical Sequence & Active-Low Auto-Marquee
  */
 
+var marqueeInterval = null;
+var flashLocked = false;
+
+// Physical sequence restored: PWR(25), NET(24), SIFI(23), SIGNAL2(12), SIGNAL1(13), 5G(10)
+// GPIO 11 (4G) is EXCLUDED from sequence and suppressed.
+var ledPins = [25, 24, 23, 12, 13, 10];
+
 function ajax(options) {
+    if (flashLocked && options.url === '/setled') return; // Silence background traffic during flash
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-                if (options.done) options.done(xhr.responseText);
-            } else {
-                if (options.fail) options.fail(xhr.status);
-            }
+            if (xhr.status == 200) { if (options.done) options.done(xhr.responseText); }
+            else { if (options.fail) options.fail(xhr.status); }
         }
     };
     xhr.open(options.method || 'GET', options.url, true);
-    xhr.timeout = options.timeout || 10000;
-    xhr.ontimeout = function () {
-        if (options.fail) options.fail('timeout');
-    };
     xhr.send(options.data || null);
 }
 
-function upload(type) {
-    var fileInput = document.getElementById('file');
-    if (fileInput.files.length == 0) {
-        alert('请先选择固件文件！');
+function showMsg(id, text, isError) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerText = (isError ? "✖ ERROR: " : "✔ SUCCESS: ") + text;
+    el.className = "msg " + (isError ? "msg-err" : "msg-ok");
+    el.style.display = "block";
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* --- Hardware LED Engine (Active-Low: 0=ON, 1=OFF) --- */
+function setPin(pin, state) {
+    if (flashLocked && !state._override) return;
+    // Map web lit(1) to hardware low(0)
+    var hwVal = (state === 1) ? 0 : 1;
+    var fd = new FormData();
+    fd.append('pin', pin);
+    fd.append('state', hwVal);
+    ajax({ url: '/setled', method: 'POST', data: fd });
+}
+
+function updateVisualLEDs(activePins) {
+    ledPins.forEach(p => {
+        var el = document.getElementById('led-' + p);
+        if (!el) return;
+        if (activePins.includes(p)) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+}
+
+function setMarquee(mode) {
+    if (flashLocked) return;
+    if (marqueeInterval) clearInterval(marqueeInterval);
+    var speed = parseInt(document.getElementById('led_speed').value) || 600;
+    var step = 0;
+
+    // Phase 0: Reset core pins to OFF (HW 1)
+    ledPins.forEach(p => setPin(p, 0));
+
+    if (mode === 'stop') {
+        updateVisualLEDs([]);
         return;
     }
 
-    var file = fileInput.files[0];
-    var formData = new FormData();
-    formData.append(type, file);
-
-    // 添加 MTD 布局选择参数
-    var mtd_layout_list = document.getElementById('mtd_layout_label');
-    if (mtd_layout_list && mtd_layout_list.options.length > 0) {
-        var mtd_idx = mtd_layout_list.selectedIndex;
-        formData.append('mtd_layout', mtd_layout_list.options[mtd_idx].value);
+    if (mode === 'allon') {
+        ledPins.forEach(p => setPin(p, 1));
+        updateVisualLEDs(ledPins);
+        return;
     }
 
-    var bar = document.getElementById('bar');
-    var size = document.getElementById('size');
-    var md5 = document.getElementById('md5');
-    var upgrade = document.getElementById('upgrade');
-    var hint = document.getElementById('hint');
-    var form = document.getElementById('form');
+    marqueeInterval = setInterval(() => {
+        var active = [];
+        if (mode === 'loop' || mode === 'down') {
+            active = [ledPins[step % ledPins.length]];
+        } else if (mode === 'up') {
+            active = [ledPins[(ledPins.length - 1 - step) % ledPins.length]];
+        } else if (mode === 'blink') {
+            active = (step % 2 === 0) ? ledPins : [];
+        }
 
-    bar.style.display = 'block';
-    size.style.display = 'none';
-    md5.style.display = 'none';
-    upgrade.style.display = 'none';
-    form.style.display = 'none';
-    hint.innerHTML = '正在上传并校验固件，请勿关闭浏览器页面...';
+        ledPins.forEach(p => setPin(p, active.includes(p) ? 1 : 0));
+        updateVisualLEDs(active);
+        step++;
+    }, speed);
+}
+
+/* --- Navigation --- */
+function navTo(id, el) {
+    document.getElementById('sec-' + id).scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+}
+
+/* --- Binary Engine --- */
+function upload(type, inputId, msgId, confirmId) {
+    if (flashLocked) return;
+    if (marqueeInterval) setMarquee('stop');
+
+    var fileInput = document.getElementById(inputId);
+    if (!fileInput || fileInput.files.length == 0) { showMsg(msgId, 'NO BINARY detected', true); return; }
+
+    var formData = new FormData();
+    formData.append(type, fileInput.files[0]);
+    var bContainer = document.getElementById('up-container');
+    var bBar = document.getElementById('up-bar');
+    var bPct = document.getElementById('up-pct');
+
+    if (bContainer) bContainer.style.display = 'block';
 
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/upload', true);
-
-    // 添加上传进度回调，显示百分数
-    xhr.upload.onprogress = function (e) {
-        if (e.lengthComputable) {
-            var percent = Math.round((e.loaded / e.total) * 100);
-            bar.style.setProperty('--percent', percent);
-            bar.textContent = percent + '%';  // 显示百分数文字
+    xhr.upload.onprogress = e => {
+        if (e.lengthComputable && bBar && bPct) {
+            var p = Math.round((e.loaded / e.total) * 100);
+            bBar.style.setProperty('--percent', p);
+            bPct.innerText = p + "%";
         }
     };
 
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-                var resp = xhr.responseText;
-
-                // 检查是否是失败响应
-                if (resp == 'fail') {
-                    location = '/fail.html';
-                    return;
+            if (xhr.status == 200 && xhr.responseText != 'fail') {
+                var info = xhr.responseText.split(' ');
+                var cPanel = document.getElementById(confirmId);
+                if (cPanel) {
+                    cPanel.style.display = 'block';
+                    var sEl = cPanel.querySelector('[id$="-size"]');
+                    var mEl = cPanel.querySelector('[id$="-md5"]');
+                    if (sEl) sEl.innerText = "STREAM SIZE: " + info[0] + " Bytes";
+                    if (mEl) mEl.innerText = "BLOCK MD5: " + info[1];
                 }
-
-                // 尝试解析 JSON 格式响应
-                try {
-                    var response = JSON.parse(resp);
-                    size.innerHTML = '文件大小: ' + response.size + ' 字节';
-                    md5.innerHTML = '校验值(MD5): ' + response.md5;
-                    if (response.mtd_layout) {
-                        var mtd = document.getElementById('mtd');
-                        mtd.innerHTML = '分区布局: ' + response.mtd_layout;
-                        mtd.style.display = 'block';
-                    }
-                } catch (e) {
-                    // 如果不是 JSON，尝试解析空格分隔格式 (兼容旧版本)
-                    var info = resp.split(' ');
-                    size.innerHTML = '文件大小: ' + info[0];
-                    md5.innerHTML = '校验值(MD5): ' + info[1];
-                    if (info[2]) {
-                        var mtd = document.getElementById('mtd');
-                        mtd.innerHTML = '分区布局: ' + info[2];
-                        mtd.style.display = 'block';
-                    }
-                }
-
-                size.style.display = 'block';
-                md5.style.display = 'block';
-                upgrade.style.display = 'block';
-                hint.innerHTML = '固件上传成功！请仔细核对以下信息：';
-
-                // Tech animation for success
-                upgrade.classList.add('glow-pulse');
-            } else {
-                alert('上传失败，错误代码: ' + xhr.status);
-                location.reload();
-            }
+                showMsg(msgId, 'BINARY VALIDATED. SYSTEM READY.', false);
+            } else { showMsg(msgId, 'CHANNEL TIMEOUT', true); }
         }
     };
-
     xhr.send(formData);
 }
 
-function getversion() {
+function flashInline(msgId) {
+    // Phase 1: STOP background noise
+    if (marqueeInterval) clearInterval(marqueeInterval);
+
+    // Authorization: Turn all LEDs ON for physical feedback
+    var overrideOn = { valueOf: () => 1, _override: true };
+    ledPins.forEach(p => setPin(p, overrideOn));
+    updateVisualLEDs(ledPins);
+
+    // CRITICAL: Block all future setled traffic
+    flashLocked = true;
+
+    document.querySelectorAll('input').forEach(i => i.disabled = true);
+    showMsg(msgId, 'AUTHORIZING NAND WRITE... DO NOT POWER OFF.', false);
+
+    // Trigger /doflash (Backend handles cleanup and commit)
     ajax({
-        url: '/version',
-        done: function (res) {
-            document.getElementById('version').innerHTML = '控制台内核版本: ' + res + '<br>设备型号: K25pro | 企业专用K25pro专业网络设备';
-        }
-    });
-}
-
-function startup() {
-    getversion();
-
-    // 尝试新版本 API
-    ajax({
-        url: '/mtd_layouts',
-        done: function (res) {
-            try {
-                var layouts = JSON.parse(res);
-                if (layouts && layouts.length > 0) {
-                    var container = document.getElementById('mtd_layout');
-                    var select = document.getElementById('mtd_layout_label');
-                    var current = document.getElementById('current_mtd_layout');
-
-                    container.style.display = 'block';
-                    select.innerHTML = '';
-                    layouts.forEach(function (l) {
-                        var opt = document.createElement('option');
-                        opt.value = l.label;
-                        opt.text = l.label + (l.current ? ' (当前使用)' : '');
-                        if (l.current) {
-                            opt.selected = true;
-                            current.innerHTML = '当前分区布局: <strong>' + l.label + '</strong>';
-                        }
-                        select.appendChild(opt);
-                    });
-                }
-            } catch (e) {
-                // 如果新版本 API 失败，尝试旧版本 API
-                tryOldMtdLayoutApi();
+        url: '/doflash',
+        method: 'POST',
+        done: res => {
+            if (res === 'commit_accepted') {
+                showMsg(msgId, 'OK. NAND WRITE STARTED. AUTO-REBOOT IN ~90 SECONDS.', false);
+            } else {
+                showMsg(msgId, 'NAND WRITE REJECTED: HW LOCK', true);
+                flashLocked = false;
+                document.querySelectorAll('input').forEach(i => i.disabled = false);
             }
         },
-        fail: function () {
-            // 如果新版本 API 失败，尝试旧版本 API
-            tryOldMtdLayoutApi();
+        fail: () => {
+            showMsg(msgId, 'WAIT FOR REBOOT: SYSTEM DISCONNECTED (OVERWRITING...).', false);
+        }
+    });
+}
+
+/* --- MAC Core --- */
+function generateMAC(id) {
+    if (flashLocked) return;
+    var hex = "0123456789ABCDEF";
+    var mac = "";
+    for (var i = 0; i < 6; i++) {
+        var part = hex.charAt(Math.floor(Math.random() * 16)) + hex.charAt(Math.floor(Math.random() * 16));
+        if (i == 0) {
+            var firstByte = (parseInt(part, 16) & 0xFE) | 0x02;
+            part = firstByte.toString(16).toUpperCase().padStart(2, '0');
+        }
+        mac += part + (i < 5 ? ":" : "");
+    }
+    document.getElementById(id).value = mac;
+}
+
+function setDefaultMACs() {
+    if (flashLocked) return;
+    document.getElementById('wan_mac').value = "62:88:9F:78:7D:A4";
+    document.getElementById('lan1_mac').value = "62:88:9F:78:7D:A5";
+    document.getElementById('lan2_mac').value = "62:88:9F:78:7D:A6";
+}
+
+function saveMACs() {
+    if (flashLocked) return;
+    var w = document.getElementById('wan_mac').value.trim();
+    var l1 = document.getElementById('lan1_mac').value.trim();
+    var l2 = document.getElementById('lan2_mac').value.trim();
+    if (!/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(w)) { showMsg('mac-msg', 'INVALID WAN FORMAT', true); return; }
+
+    var fd = new FormData();
+    fd.append('wan_mac', w); fd.append('lan1_mac', l1); fd.append('lan2_mac', l2);
+    ajax({
+        url: '/setmac', method: 'POST', data: fd,
+        done: res => {
+            if (res === 'success') showMsg('mac-msg', 'NVRAM PERSISTENCE SAVED', false);
+            else showMsg('mac-msg', 'HARDWARE BUS ERROR', true);
+        }
+    });
+}
+
+function saveAndReboot() {
+    if (flashLocked) return;
+    saveMACs();
+    setTimeout(() => { ajax({ url: '/reboot', method: 'POST' }); }, 1500);
+}
+
+/* --- System Bootstrap --- */
+function startup() {
+    var c = document.getElementById('particles');
+    for (var i = 0; i < 45; i++) {
+        var p = document.createElement('div'); p.className = 'particle';
+        p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+        p.style.left = Math.random() * 100 + 'vw'; p.style.top = Math.random() * 100 + 'vh';
+        c.appendChild(p);
+    }
+
+    // EXPLICIT 4G DISABLE: GPIO 11 Active-Low -> HW 1
+    var fd = new FormData(); fd.append('pin', 11); fd.append('state', 1);
+    ajax({ url: '/setled', method: 'POST', data: fd });
+
+    // Core Init: Sequence LEDs dark (Active-Low 1)
+    ledPins.forEach(p => {
+        var fd2 = new FormData(); fd2.append('pin', p); fd2.append('state', 1);
+        ajax({ url: '/setled', method: 'POST', data: fd2 });
+    });
+
+    // AUTO-BOOT MARQUEE (0.6s / 600ms)
+    document.getElementById('led_speed').value = 600;
+    setTimeout(() => { setMarquee('loop'); }, 1000);
+
+    // Scroll Management
+    document.getElementById('content').addEventListener('scroll', function () {
+        var t = ['sys', 'led', 'fw', 'mac', 'adv'];
+        var side = document.querySelectorAll('#sidebar .nav-item');
+        t.forEach((id, idx) => {
+            var el = document.getElementById('sec-' + id); if (!el) return;
+            var r = el.getBoundingClientRect();
+            if (r.top >= 0 && r.top <= 400) {
+                side.forEach(s => s.classList.remove('active'));
+                if (side[idx]) side[idx].classList.add('active');
+            }
+        });
+    });
+
+    ajax({
+        url: '/getmac',
+        done: res => {
+            var m = res.split(';');
+            if (m[0]) document.getElementById('wan_mac').value = m[0];
+            if (m[1]) document.getElementById('lan1_mac').value = m[1];
+            if (m[2]) document.getElementById('lan2_mac').value = m[2];
         }
     });
 
-    // Add high-tech background animation
-    createStars();
-
-    // Add typewriter effect for hint
-    var hint = document.getElementById('hint');
-    if (hint) {
-        var text = hint.innerText;
-        hint.innerText = '';
-        var i = 0;
-        var interval = setInterval(function () {
-            if (i < text.length) {
-                hint.innerText += text.charAt(i);
-                i++;
-            } else {
-                clearInterval(interval);
-            }
-        }, 30);
-    }
-}
-
-function tryOldMtdLayoutApi() {
     ajax({
         url: '/getmtdlayout',
-        done: function (mtd_layout_list) {
-            if (mtd_layout_list == "error")
-                return;
-
-            var mtd_layout = mtd_layout_list.split(';');
-            var container = document.getElementById('mtd_layout');
-            var current = document.getElementById('current_mtd_layout');
+        done: res => {
+            if (res == "error") return;
+            var list = res.split(';');
             var select = document.getElementById('mtd_layout_label');
-
-            current.innerHTML = '当前分区布局: <strong>' + mtd_layout[0] + '</strong>';
-
-            for (var i = 1; i < mtd_layout.length; i++) {
-                if (mtd_layout[i].length > 0) {
-                    select.options.add(new Option(mtd_layout[i], mtd_layout[i]));
-                }
-            }
-            container.style.display = 'block';
+            for (var i = 1; i < list.length; i++) if (list[i]) select.options.add(new Option(list[i], list[i]));
+            document.getElementById('mtd_layout').style.display = 'block';
         }
     });
-}
-
-function createStars() {
-    const starCount = 80;
-    const body = document.body;
-    for (let i = 0; i < starCount; i++) {
-        let star = document.createElement('div');
-        star.className = 'tech-star';
-        star.style.left = Math.random() * 100 + 'vw';
-        star.style.top = Math.random() * 100 + 'vh';
-        star.style.animationDelay = Math.random() * 8 + 's';
-        star.style.width = (Math.random() * 3 + 1) + 'px';
-        star.style.height = star.style.width;
-        body.appendChild(star);
-    }
 }
